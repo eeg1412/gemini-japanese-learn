@@ -130,7 +130,7 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 -为所有汉字标注振假名，格式为：漢字(かんじ)。
 -将输入的日语翻译为简体中文。
 -纠正用户的错误（如果有）。
--回复内容精炼，无重复，并主要使用中文进行解释。
+-回复内容精炼，无重复，无多余内容，使用最少的token用中文进行解释。
 -使用工具函数 \`save_vocabularies\` 一次性保存文本中所有出现的关键生词。
 `.trim()
 
