@@ -317,7 +317,9 @@ watch(showConfig, newVal => {
 
       <!-- Input Bar -->
       <div class="flex gap-2">
-        <label class="cursor-pointer text-gray-500 hover:text-blue-500 p-2">
+        <label
+          class="cursor-pointer text-gray-500 hover:text-blue-500 p-2 flex items-center"
+        >
           <span class="material-icons">photo_camera</span>
           <input
             type="file"

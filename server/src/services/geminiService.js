@@ -41,7 +41,7 @@ const tools = [
             meaning: { type: 'STRING', description: '单词的准确中文含义' },
             example: {
               type: 'STRING',
-              description: '一个包含该单词的典型日语例句'
+              description: '一个包含该单词的典型日语例句，汉字部分请标注振假名'
             },
             type: {
               type: 'STRING',
