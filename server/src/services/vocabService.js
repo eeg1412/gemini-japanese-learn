@@ -74,3 +74,7 @@ export const getVocabularies = ({
     limit: Number(limit)
   }
 }
+
+export const deleteVocabulary = id => {
+  return db.prepare('DELETE FROM vocabularies WHERE id = ?').run(id)
+}

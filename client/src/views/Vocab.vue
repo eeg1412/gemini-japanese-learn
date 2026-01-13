@@ -48,6 +48,20 @@ const toggleSort = () => {
   loadVocab(true)
 }
 
+const deleteVocab = async id => {
+  if (!confirm('确定要从生词本中删除该单词吗？')) return
+
+  try {
+    await axios.delete(`/api/vocab/${id}`, {
+      headers: { Authorization: `Bearer ${auth.token}` }
+    })
+    vocabList.value = vocabList.value.filter(item => item.id !== id)
+  } catch (e) {
+    console.error('Delete error:', e)
+    alert('删除失败')
+  }
+}
+
 const scrollToTop = () => {
   nextTick(() => {
     if (container.value) {
@@ -121,12 +135,21 @@ onMounted(() => {
               例句: {{ word.example }}
             </div>
           </div>
-          <div class="text-xs text-gray-400">
-            {{
-              new Date(word.updated_at).toLocaleString('zh-CN', {
-                hour12: false
-              })
-            }}
+          <div class="flex flex-col items-end gap-4">
+            <button
+              @click="deleteVocab(word.id)"
+              class="text-gray-400 hover:text-red-500 transition-colors"
+              title="删除生词"
+            >
+              <span class="material-icons">delete</span>
+            </button>
+            <div class="text-xs text-gray-400">
+              {{
+                new Date(word.updated_at).toLocaleString('zh-CN', {
+                  hour12: false
+                })
+              }}
+            </div>
           </div>
         </div>
       </div>

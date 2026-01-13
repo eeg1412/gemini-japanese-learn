@@ -7,9 +7,13 @@ export const useAuthStore = defineStore('auth', {
     token: localStorage.getItem('token') || null
   }),
   actions: {
-    async login(username, password) {
+    async login(username, password, rememberMe) {
       try {
-        const res = await axios.post('/api/auth/login', { username, password })
+        const res = await axios.post('/api/auth/login', {
+          username,
+          password,
+          rememberMe
+        })
         this.token = res.data.accessToken
         localStorage.setItem('token', this.token)
         router.push('/')

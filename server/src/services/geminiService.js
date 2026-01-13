@@ -49,7 +49,7 @@ const tools = [
                 '词性标签。必须采用以下规范之一：[名词, 动词, 形容词, 副词, 助词, 连词, 感叹词, 短语]'
             }
           },
-          required: ['original', 'reading', 'meaning', 'type']
+          required: ['original', 'reading', 'meaning', 'example', 'type']
         }
       }
     ]

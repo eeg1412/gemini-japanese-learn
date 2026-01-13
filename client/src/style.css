@@ -9,3 +9,21 @@ body,
   margin: 0;
   padding: 0;
 }
+
+/* Scrollbar Styling - Modern CSS */
+@layer base {
+  :root {
+    --scrollbar-thumb: #d1d5db; /* gray-300 */
+    --scrollbar-track: transparent;
+  }
+
+  .dark {
+    --scrollbar-thumb: #4b5563; /* gray-600 */
+    --scrollbar-track: #111827; /* gray-900 */
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}

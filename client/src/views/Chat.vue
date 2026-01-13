@@ -1,9 +1,16 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import axios from 'axios'
+import MarkdownIt from 'markdown-it'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true
+})
+
 const messages = ref([])
 const input = ref('')
 const imageFile = ref(null)
@@ -181,10 +188,10 @@ onMounted(() => {
       >
         <div
           :class="[
-            'max-w-[80%] min-w-0 rounded-lg p-3 shadow-md whitespace-pre-wrap break-words',
+            'max-w-[80%] min-w-0 rounded-lg p-3 shadow-md break-words',
             msg.role === 'user'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700'
+              ? 'bg-blue-600 text-white whitespace-pre-wrap'
+              : 'bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 prose dark:prose-invert prose-sm max-w-none'
           ]"
         >
           <img
@@ -193,9 +200,10 @@ onMounted(() => {
             class="max-w-full h-auto rounded mb-2"
           />
           <div v-if="msg.loading" class="animate-pulse">思考中...</div>
-          <div v-else class="whitespace-pre-wrap break-words">
+          <div v-else-if="msg.role === 'user'">
             {{ msg.content }}
           </div>
+          <div v-else v-html="md.render(msg.content)"></div>
         </div>
       </div>
     </div>
@@ -227,8 +235,10 @@ onMounted(() => {
         <img :src="imagePreview" class="h-20 rounded border" />
         <button
           @click="
-            imageFile = null
-            imagePreview = null
+            () => {
+              imageFile = null
+              imagePreview = null
+            }
           "
           class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
         >
@@ -265,3 +275,16 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Move prose margin adjustments here if needed */
+:deep(.prose) {
+  max-width: none;
+}
+:deep(.prose p:first-child) {
+  margin-top: 0;
+}
+:deep(.prose p:last-child) {
+  margin-bottom: 0;
+}
+</style>
