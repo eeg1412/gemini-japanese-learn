@@ -75,6 +75,13 @@ try {
 
   const yarnCmd = 'yarn'
 
+  console.log('[start] 在 server 目录运行 yarn install...')
+  await runCommand(yarnCmd, ['--cwd', 'server', 'install'], {
+    cwd: rootDir,
+    stdio: 'inherit',
+    shell: true
+  })
+
   if (!hasJwtSecretKey()) {
     console.log('[start] 未检测到 server/secret.key，先执行 keygen...')
     await runCommand(yarnCmd, ['run', 'keygen'], {
