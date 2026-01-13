@@ -1,0 +1,267 @@
+<script setup>
+import { ref, onMounted, nextTick } from 'vue'
+import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+const messages = ref([])
+const input = ref('')
+const imageFile = ref(null)
+const imagePreview = ref(null)
+const customPrompt = ref('')
+const showConfig = ref(false)
+const isLoading = ref(false)
+const page = ref(1)
+const hasMore = ref(true)
+const chatContainer = ref(null)
+
+const loadHistory = async (isInitial = false) => {
+  if (!hasMore.value && !isInitial) return
+
+  try {
+    const res = await axios.get('/api/chat/history', {
+      params: { page: page.value, limit: 20 },
+      headers: { Authorization: `Bearer ${auth.token}` }
+    })
+
+    // API items are already sorted oldest -> newest for this batch
+    const newMessages = res.data.data
+
+    if (res.data.data.length < 20) {
+      hasMore.value = false
+    }
+
+    if (isInitial) {
+      messages.value = newMessages
+      scrollToBottom()
+    } else {
+      // Prepend
+      const prevHeight = chatContainer.value.scrollHeight
+      messages.value = [...newMessages, ...messages.value]
+
+      nextTick(() => {
+        const newHeight = chatContainer.value.scrollHeight
+        chatContainer.value.scrollTop = newHeight - prevHeight
+      })
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const scrollToBottom = (force = true) => {
+  nextTick(() => {
+    if (chatContainer.value) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer.value
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100
+      if (force || isAtBottom) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+      }
+    }
+  })
+}
+
+const handleScroll = () => {
+  if (
+    chatContainer.value.scrollTop === 0 &&
+    !isLoading.value &&
+    hasMore.value
+  ) {
+    page.value++
+    loadHistory()
+  }
+}
+
+const selectImage = e => {
+  const file = e.target.files[0]
+  if (file) processFile(file)
+}
+
+const processFile = file => {
+  imageFile.value = file
+  const reader = new FileReader()
+  reader.onload = e => (imagePreview.value = e.target.result)
+  reader.readAsDataURL(file)
+}
+
+const handlePaste = e => {
+  const items = (e.clipboardData || window.clipboardData).items
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      const blob = items[i].getAsFile()
+      processFile(blob)
+    }
+  }
+}
+
+const sendMessage = async () => {
+  if ((!input.value.trim() && !imageFile.value) || isLoading.value) return
+
+  const currentMsg = input.value
+  const currentImg = imagePreview.value
+
+  // Optimistic UI
+  messages.value.push({
+    role: 'user',
+    content: currentMsg,
+    image_data: currentImg,
+    created_at: Date.now()
+  })
+  messages.value.push({
+    role: 'model',
+    content: '思考中...',
+    created_at: Date.now(),
+    loading: true
+  })
+  scrollToBottom(true) // Always scroll for user message
+
+  // Reset inputs
+  input.value = ''
+  imageFile.value = null
+  imagePreview.value = null
+  isLoading.value = true
+
+  try {
+    const res = await axios.post(
+      '/api/chat/send',
+      {
+        message: currentMsg,
+        image: currentImg,
+        customPrompt: customPrompt.value
+      },
+      {
+        headers: { Authorization: `Bearer ${auth.token}` }
+      }
+    )
+
+    // Replace loading message
+    messages.value.pop()
+    messages.value.push({
+      role: 'model',
+      content: res.data.response,
+      created_at: Date.now()
+    })
+
+    // Always force scroll to bottom when AI finishes
+    scrollToBottom(true)
+  } catch (e) {
+    messages.value.pop()
+    messages.value.push({
+      role: 'model',
+      content: '错误: ' + e.message,
+      error: true
+    })
+    scrollToBottom(true)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadHistory(true)
+})
+</script>
+
+<template>
+  <div class="flex flex-col h-full bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <!-- Chat Area -->
+    <div
+      ref="chatContainer"
+      @scroll="handleScroll"
+      class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 min-h-0"
+    >
+      <div v-if="!hasMore" class="text-center text-gray-400 text-sm py-2">
+        没有更多历史记录
+      </div>
+
+      <div
+        v-for="(msg, index) in messages"
+        :key="index"
+        :class="['flex', msg.role === 'user' ? 'justify-end' : 'justify-start']"
+      >
+        <div
+          :class="[
+            'max-w-[80%] min-w-0 rounded-lg p-3 shadow-md whitespace-pre-wrap break-words',
+            msg.role === 'user'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700'
+          ]"
+        >
+          <img
+            v-if="msg.image_data"
+            :src="msg.image_data"
+            class="max-w-full h-auto rounded mb-2"
+          />
+          <div v-if="msg.loading" class="animate-pulse">思考中...</div>
+          <div v-else class="whitespace-pre-wrap break-words">
+            {{ msg.content }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
+      <!-- Config Toggle -->
+      <button
+        @click="showConfig = !showConfig"
+        class="flex items-center gap-1 text-xs text-gray-500 mb-2 hover:underline"
+      >
+        <span class="material-icons text-xs">settings</span>
+        {{ showConfig ? '隐藏设置' : '显示设置' }}
+      </button>
+
+      <div
+        v-if="showConfig"
+        class="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded"
+      >
+        <label class="block text-xs font-bold mb-1">自定义系统提示词：</label>
+        <textarea
+          v-model="customPrompt"
+          class="w-full text-sm p-1 rounded border dark:bg-gray-600 dark:border-gray-500"
+        ></textarea>
+      </div>
+
+      <!-- Preview Image -->
+      <div v-if="imagePreview" class="relative inline-block mb-2">
+        <img :src="imagePreview" class="h-20 rounded border" />
+        <button
+          @click="
+            imageFile = null
+            imagePreview = null
+          "
+          class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+        >
+          <span class="material-icons text-xs">close</span>
+        </button>
+      </div>
+
+      <!-- Input Bar -->
+      <div class="flex gap-2">
+        <label class="cursor-pointer text-gray-500 hover:text-blue-500 p-2">
+          <span class="material-icons">photo_camera</span>
+          <input
+            type="file"
+            @change="selectImage"
+            accept="image/*"
+            class="hidden"
+          />
+        </label>
+        <textarea
+          v-model="input"
+          @paste="handlePaste"
+          @keydown.enter.exact.prevent="sendMessage"
+          placeholder="输入日语，或者粘贴/上传图片..."
+          class="flex-1 p-2 border rounded resize-none focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 h-10 overflow-hidden"
+        ></textarea>
+        <button
+          @click="sendMessage"
+          :disabled="isLoading"
+          class="bg-blue-600 text-white px-4 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center"
+        >
+          <span class="material-icons">send</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,10 @@
+{
+  "name": "gemini-japanese-learn-root",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node run.js",
+    "keygen": "node scripts/generate-secret.js"
+  }
+}

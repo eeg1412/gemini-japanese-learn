@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.sqlite-shm
+*.sqlite-wal
+database.sqlite
+dist/
+.vscode/
+user_prompt.txt
+secret.key
