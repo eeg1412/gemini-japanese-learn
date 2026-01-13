@@ -23,33 +23,47 @@ const tools = [
   {
     functionDeclarations: [
       {
-        name: 'save_vocabulary',
+        name: 'save_vocabularies',
         description:
-          '将日语生词保存到用户的生词本中。每当对话中出现值得学习的核心词汇时，请务必调用此工具进行保存。',
+          '批量将日语生词保存到用户的生词本中。请分析对话内容，提取所有值得学习的核心词汇，并一次性调用此工具。',
         parameters: {
           type: 'OBJECT',
           properties: {
-            original: {
-              type: 'STRING',
-              description:
-                '单词的原型/字典形（如：食べる、学校）。这是词库中的唯一标识。'
-            },
-            reading: {
-              type: 'STRING',
-              description: '单词的平假名或片假名读音'
-            },
-            meaning: { type: 'STRING', description: '单词的准确中文含义' },
-            example: {
-              type: 'STRING',
-              description: '一个包含该单词的典型日语例句，汉字部分请标注振假名'
-            },
-            type: {
-              type: 'STRING',
-              description:
-                '词性标签。必须采用以下规范之一：[名词, 动词, 形容词, 副词, 助词, 连词, 感叹词, 短语]'
+            vocabularies: {
+              type: 'ARRAY',
+              description: '生词列表',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  original: {
+                    type: 'STRING',
+                    description:
+                      '单词的原型/字典形（如：食べる、学校）。这是词库中的唯一标识。'
+                  },
+                  reading: {
+                    type: 'STRING',
+                    description: '单词的平假名或片假名读音'
+                  },
+                  meaning: {
+                    type: 'STRING',
+                    description: '单词的准确中文含义'
+                  },
+                  example: {
+                    type: 'STRING',
+                    description:
+                      '一个包含该单词的典型日语例句，汉字部分请标注振假名'
+                  },
+                  type: {
+                    type: 'STRING',
+                    description:
+                      '词性标签。必须采用以下规范之一：[名词, 动词, 形容词, 副词, 助词, 连词, 感叹词, 短语]'
+                  }
+                },
+                required: ['original', 'reading', 'meaning', 'example', 'type']
+              }
             }
           },
-          required: ['original', 'reading', 'meaning', 'example', 'type']
+          required: ['vocabularies']
         }
       }
     ]
@@ -75,9 +89,9 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 当你收到用户的日语文本或图片时，请执行以下操作：
 1. 解释文本中的语法点。
 2. 纠正用户的错误（如果有）。
-3. 使用工具函数 \`save_vocabulary\` 保存文本中出现的关键生词。
+3. 使用工具函数 \`save_vocabularies\` 一次性保存文本中所有出现的关键生词。
 4. 回复时请使用亲切、鼓励的语气，并主要使用中文进行解释。
-5. 每次对话中，尝试提取生词进行保存。
+5. 每次对话中，尝试提取生词并通过一次工具调用进行保存。
 `.trim()
 
     let userPromptOverride = ''
@@ -96,7 +110,7 @@ ${customInstruction}
 任务执行规范：
 1. 将输入的日语翻译为简体中文。
 2. 为所有汉字标注振假名，格式为：漢字(かんじ)。
-3. 提取核心词汇并为每个单词调用 'save_vocabulary' 函数。
+3. 提取所有核心词汇，并一次性调用 'save_vocabularies' 函数。
 4. 返回翻译结果和标注了振假名的原文。
 `.trim()
 
@@ -155,15 +169,25 @@ ${customInstruction}
       const functionResponses = []
 
       for (const call of functionCalls) {
-        if (call.name === 'save_vocabulary') {
-          const args = call.args
-          console.log('Calling tool save_vocabulary:', args)
-          const savedVocab = upsertVocabulary(args)
+        if (call.name === 'save_vocabularies') {
+          const { vocabularies } = call.args
+          console.log(
+            'Calling tool save_vocabularies with count:',
+            vocabularies?.length
+          )
+
+          const results = []
+          if (Array.isArray(vocabularies)) {
+            for (const vocab of vocabularies) {
+              const saved = upsertVocabulary(vocab)
+              results.push(saved)
+            }
+          }
 
           functionResponses.push({
             functionResponse: {
-              name: 'save_vocabulary',
-              response: { result: savedVocab }
+              name: 'save_vocabularies',
+              response: { results }
             }
           })
         }

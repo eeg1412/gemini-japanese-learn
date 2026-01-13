@@ -161,6 +161,7 @@ const sendMessage = async () => {
 
   // Reset inputs
   input.value = ''
+  nextTick(() => autoResizeTextarea(inputEl.value, 1))
   imageFile.value = null
   imagePreview.value = null
   isLoading.value = true
@@ -334,7 +335,7 @@ watch(showConfig, newVal => {
           @paste="handlePaste"
           @keydown.enter.exact.prevent="sendMessage"
           @input="e => autoResizeTextarea(e.target)"
-          placeholder="输入日语，或者粘贴/上传图片..."
+          placeholder="输入内容"
           class="flex-1 p-2 border rounded resize-none focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 min-h-[1.5rem] max-h-[8.5rem]"
         ></textarea>
         <button
