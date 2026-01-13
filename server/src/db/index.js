@@ -17,6 +17,7 @@ export function initDb() {
       meaning TEXT,
       example TEXT,
       type TEXT,
+      starred INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -29,6 +30,15 @@ export function initDb() {
       created_at INTEGER NOT NULL
     );
   `)
+
+  // Lightweight migration for existing DBs
+  const vocabColumns = db.prepare('PRAGMA table_info(vocabularies)').all()
+  const hasStarred = vocabColumns.some(c => c.name === 'starred')
+  if (!hasStarred) {
+    db.exec(
+      'ALTER TABLE vocabularies ADD COLUMN starred INTEGER NOT NULL DEFAULT 0'
+    )
+  }
   console.log('Database initialized.')
 }
 

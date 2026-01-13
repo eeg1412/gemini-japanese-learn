@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node run.js",
-    "keygen": "node scripts/generate-secret.js"
+    "keygen": "node scripts/generate-secret.js",
+    "start": "node scripts/start.js"
   }
 }

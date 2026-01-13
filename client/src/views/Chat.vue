@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { useAuthStore } from '../stores/auth'
@@ -21,6 +21,43 @@ const isLoading = ref(false)
 const page = ref(1)
 const hasMore = ref(true)
 const chatContainer = ref(null)
+
+const inputEl = ref(null)
+const customPromptEl = ref(null)
+
+const getLineHeightPx = el => {
+  if (!el) return 0
+  const styles = window.getComputedStyle(el)
+  const lineHeight = styles.lineHeight
+  if (lineHeight && lineHeight !== 'normal') return parseFloat(lineHeight)
+  const fontSize = parseFloat(styles.fontSize || '14')
+  return fontSize * 1.2
+}
+
+const autoResizeTextarea = (el, maxRows = 5) => {
+  if (!el) return
+
+  const styles = window.getComputedStyle(el)
+  const paddingTop = parseFloat(styles.paddingTop || '0')
+  const paddingBottom = parseFloat(styles.paddingBottom || '0')
+  const borderTop = parseFloat(styles.borderTopWidth || '0')
+  const borderBottom = parseFloat(styles.borderBottomWidth || '0')
+  const lineHeight = getLineHeightPx(el)
+
+  const verticalPadding = paddingTop + paddingBottom + borderTop + borderBottom
+  const singleLineHeight = lineHeight + verticalPadding
+  const maxHeight = lineHeight * maxRows + verticalPadding
+
+  // 先设置极小的高度，这样 scrollHeight 才能准确反映实际内容高度
+  el.style.height = '1px'
+  const contentHeight = el.scrollHeight
+
+  // 计算实际需要的高度：至少1行，最多maxRows行
+  let nextHeight = Math.min(contentHeight, maxHeight)
+
+  el.style.height = `${nextHeight}px`
+  el.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden'
+}
 
 const loadHistory = async (isInitial = false) => {
   if (!hasMore.value && !isInitial) return
@@ -165,7 +202,37 @@ const sendMessage = async () => {
 }
 
 onMounted(() => {
+  // 从 localStorage 恢复自定义系统提示词
+  const savedPrompt = localStorage.getItem('customPrompt')
+  if (savedPrompt) {
+    showConfig.value = true
+    nextTick(() => {
+      customPrompt.value = savedPrompt
+    })
+  }
+
   loadHistory(true)
+  nextTick(() => {
+    autoResizeTextarea(inputEl.value, 1)
+  })
+})
+
+watch(input, () => nextTick(() => autoResizeTextarea(inputEl.value)))
+watch(customPrompt, newVal => {
+  // 保存到 localStorage
+  if (newVal && newVal.trim()) {
+    localStorage.setItem('customPrompt', newVal)
+  } else {
+    localStorage.removeItem('customPrompt')
+  }
+  nextTick(() => autoResizeTextarea(customPromptEl.value))
+})
+watch(showConfig, newVal => {
+  if (newVal) {
+    nextTick(() => {
+      autoResizeTextarea(customPromptEl.value, 1)
+    })
+  }
 })
 </script>
 
@@ -225,8 +292,10 @@ onMounted(() => {
       >
         <label class="block text-xs font-bold mb-1">自定义系统提示词：</label>
         <textarea
+          ref="customPromptEl"
           v-model="customPrompt"
-          class="w-full text-sm p-1 rounded border dark:bg-gray-600 dark:border-gray-500"
+          @input="e => autoResizeTextarea(e.target)"
+          class="w-full text-sm p-1 rounded border dark:bg-gray-600 dark:border-gray-500 resize-none"
         ></textarea>
       </div>
 
@@ -258,11 +327,13 @@ onMounted(() => {
           />
         </label>
         <textarea
+          ref="inputEl"
           v-model="input"
           @paste="handlePaste"
           @keydown.enter.exact.prevent="sendMessage"
+          @input="e => autoResizeTextarea(e.target)"
           placeholder="输入日语，或者粘贴/上传图片..."
-          class="flex-1 p-2 border rounded resize-none focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 h-10 overflow-hidden"
+          class="flex-1 p-2 border rounded resize-none focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 min-h-[1.5rem] max-h-[8.5rem]"
         ></textarea>
         <button
           @click="sendMessage"

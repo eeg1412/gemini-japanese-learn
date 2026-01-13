@@ -32,7 +32,7 @@ const toggleTheme = () => {
       <h1
         class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500"
       >
-        Gemini Japanese
+        Gemini日语学习
       </h1>
       <div v-if="auth.token" class="flex items-center gap-2">
         <button
