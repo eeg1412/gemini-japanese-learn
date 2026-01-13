@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { useAuthStore } from '../stores/auth'
+import { processImageWithMaxDimension } from '../utils/imageUtils'
 
 const auth = useAuthStore()
 const md = new MarkdownIt({
@@ -140,11 +141,19 @@ const selectImage = e => {
   if (file) processFile(file)
 }
 
-const processFile = file => {
-  imageFile.value = file
-  const reader = new FileReader()
-  reader.onload = e => (imagePreview.value = e.target.result)
-  reader.readAsDataURL(file)
+const processFile = async file => {
+  try {
+    // 检查并缩放图片
+    const { file: processedFile, base64 } = await processImageWithMaxDimension(
+      file,
+      1600
+    )
+    imageFile.value = processedFile
+    imagePreview.value = base64
+  } catch (error) {
+    console.error('Failed to process image:', error)
+    alert('图片处理失败: ' + error.message)
+  }
 }
 
 const handlePaste = e => {
