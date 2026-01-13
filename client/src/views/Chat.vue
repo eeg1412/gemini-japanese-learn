@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { useAuthStore } from '../stores/auth'
@@ -21,6 +21,25 @@ const isLoading = ref(false)
 const page = ref(1)
 const hasMore = ref(true)
 const chatContainer = ref(null)
+const imageToken = ref(null)
+
+const fetchImageToken = async () => {
+  try {
+    const res = await axios.get('/api/chat/image-token', {
+      headers: { Authorization: `Bearer ${auth.token}` }
+    })
+    imageToken.value = res.data.imageToken
+  } catch (e) {
+    console.error('Failed to fetch image token:', e)
+  }
+}
+
+const getImageUrl = imageData => {
+  if (!imageData) return ''
+  if (imageData.startsWith('data:')) return imageData
+  // Use specialized image token
+  return `/api/chat/image/${imageData}?token=${imageToken.value || ''}`
+}
 
 const inputEl = ref(null)
 const customPromptEl = ref(null)
@@ -191,9 +210,10 @@ const sendMessage = async () => {
     scrollToBottom(true)
   } catch (e) {
     messages.value.pop()
+    const errorMsg = e.response?.data?.error || e.message
     messages.value.push({
       role: 'model',
-      content: '错误: ' + e.message,
+      content: '错误: ' + errorMsg,
       error: true
     })
     scrollToBottom(true)
@@ -202,7 +222,14 @@ const sendMessage = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 获取图片访问令牌
+  await fetchImageToken()
+  // 每50分钟刷新一次 (有效期1小时)
+  const timer = setInterval(fetchImageToken, 50 * 60 * 1000)
+
+  onUnmounted(() => clearInterval(timer))
+
   // 从 localStorage 恢复自定义系统提示词
   const savedPrompt = localStorage.getItem('customPrompt')
   if (savedPrompt) {
@@ -228,6 +255,17 @@ watch(customPrompt, newVal => {
   }
   nextTick(() => autoResizeTextarea(customPromptEl.value))
 })
+
+watch(
+  () => auth.token,
+  newToken => {
+    if (newToken) {
+      fetchImageToken()
+    } else {
+      imageToken.value = null
+    }
+  }
+)
 watch(showConfig, newVal => {
   if (newVal) {
     nextTick(() => {
@@ -264,8 +302,8 @@ watch(showConfig, newVal => {
         >
           <img
             v-if="msg.image_data"
-            :src="msg.image_data"
-            class="max-w-full h-auto rounded mb-2"
+            :src="getImageUrl(msg.image_data)"
+            class="w-full max-w-[100px] h-[100px] rounded mb-2 object-contain bg-gray-300"
           />
           <div v-if="msg.loading" class="animate-pulse">思考中...</div>
           <div v-else-if="msg.role === 'user'">

@@ -1,11 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import { upsertVocabulary } from './vocabService.js'
 import db from '../db/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const CHAT_IMAGE_DIR = path.join(__dirname, '../../chat/image')
+
+// Ensure image directory exists
+if (!fs.existsSync(CHAT_IMAGE_DIR)) {
+  fs.mkdirSync(CHAT_IMAGE_DIR, { recursive: true })
+}
 
 let genAIInstance = null
 function getGenAI() {
@@ -71,6 +78,38 @@ const tools = [
 ]
 
 export async function processChat(input, imageBase64, customInstruction = '') {
+  let imagePath = null
+  let mimeType = 'image/jpeg'
+  let base64Data = null
+
+  // Process image if exists
+  if (imageBase64) {
+    const match = String(imageBase64).match(
+      /^data:(image\/([a-zA-Z0-9.+-]+));base64,/
+    )
+    mimeType = match ? match[1] : 'image/jpeg'
+    const extension = match ? match[2] : 'jpg'
+    base64Data = String(imageBase64).replace(
+      /^data:image\/[a-zA-Z0-9.+-]+;base64,/,
+      ''
+    )
+    const buffer = Buffer.from(base64Data, 'base64')
+    const hash = crypto.createHash('md5').update(buffer).digest('hex')
+    const fileName = `${hash}.${extension}`
+    const fullPath = path.join(CHAT_IMAGE_DIR, fileName)
+
+    if (!fs.existsSync(fullPath)) {
+      fs.writeFileSync(fullPath, buffer)
+    }
+    imagePath = fileName // Store only filename in DB
+  }
+
+  // 1. 立即记录用户消息
+  const now = Date.now()
+  db.prepare(
+    'INSERT INTO chat_history (role, content, image_data, created_at) VALUES (?, ?, ?, ?)'
+  ).run('user', input, imagePath, now)
+
   try {
     const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
     const model = getGenAI().getGenerativeModel({
@@ -87,10 +126,10 @@ export async function processChat(input, imageBase64, customInstruction = '') {
     let defaultSystemPrompt = `
 你是一位资深的日语老师。你的任务是帮助用户学习日语。
 当你收到用户的日语文本或图片时，请执行以下操作：
-1. 解释文本中的语法点。
+1. 解释文本中的语法点和词汇。
 2. 纠正用户的错误（如果有）。
 3. 使用工具函数 \`save_vocabularies\` 一次性保存文本中所有出现的关键生词。
-4. 回复时请使用亲切、鼓励的语气，并主要使用中文进行解释。
+4. 回复内容精炼，并主要使用中文进行解释。
 5. 每次对话中，尝试提取生词并通过一次工具调用进行保存。
 `.trim()
 
@@ -117,17 +156,7 @@ ${customInstruction}
     const parts = []
     parts.push({ text: fullInstruction })
 
-    if (imageBase64) {
-      // Support data URL (data:image/png;base64,...) and raw base64.
-      const match = String(imageBase64).match(
-        /^data:(image\/[a-zA-Z0-9.+-]+);base64,/
-      )
-      const mimeType = match ? match[1] : 'image/jpeg'
-      const base64Data = String(imageBase64).replace(
-        /^data:image\/[a-zA-Z0-9.+-]+;base64,/,
-        ''
-      )
-
+    if (base64Data) {
       parts.push({
         inlineData: {
           data: base64Data,
@@ -161,7 +190,7 @@ ${customInstruction}
     // Gemini 1.5 automatic function calling isn't strictly "auto" in node sdk same way as python sometimes,
     // we iterate requests.
 
-    const maxTurns = 10 // Prevent infinite loops
+    const maxTurns = 100 // Prevent infinite loops
     let turns = 0
 
     while (response.functionCalls() && turns < maxTurns) {
@@ -204,12 +233,12 @@ ${customInstruction}
     const textResponse =
       collectedTexts.join('\n\n').trim() || safeText(response)
 
-    // Log to DB
-    const now = Date.now()
-    // User message
-    db.prepare(
-      'INSERT INTO chat_history (role, content, image_data, created_at) VALUES (?, ?, ?, ?)'
-    ).run('user', input, imageBase64 || null, now)
+    if (!textResponse) {
+      throw new Error(
+        'AI 未生成任何有效内容，可能是因为违反了安全策略或受到了干扰。'
+      )
+    }
+
     // Model message
     db.prepare(
       'INSERT INTO chat_history (role, content, created_at) VALUES (?, ?, ?)'
@@ -218,25 +247,24 @@ ${customInstruction}
     return textResponse
   } catch (error) {
     console.error('AI Processing Error:', error)
-    throw error
+    // 构造更友好的错误信息抛给前台
+    const errorMessage = error.message.includes('safety')
+      ? '内容被安全过滤器屏蔽，请尝试调整输入。'
+      : `AI 服务出错: ${error.message}`
+    throw new Error(errorMessage)
   }
 }
 
 export function getChatHistory(page = 1, limit = 20) {
   const offset = (page - 1) * limit
   const rows = db
-    .prepare(
-      'SELECT * FROM chat_history ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    )
+    .prepare('SELECT * FROM chat_history ORDER BY id DESC LIMIT ? OFFSET ?')
     .all(limit, offset)
   const count = db
     .prepare('SELECT COUNT(*) as count FROM chat_history')
     .get().count
   return {
-    data: rows.reverse(), // Show oldest first in the UI usually? Or newest at bottom. Front end request "Scroll up to get next page", implying default view is newest.
-    // "Default from new to old".
-    // If we request page 1 (newest 20), we typically render them at the bottom.
-    // I will return them as is (DESC), frontend can reverse them for display order (bottom-up).
+    data: rows.reverse(),
     total: count,
     page,
     limit

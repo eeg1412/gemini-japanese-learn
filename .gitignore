@@ -7,3 +7,4 @@ dist/
 .vscode/
 user_prompt.txt
 secret.key
+/server/chat/image/

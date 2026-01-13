@@ -1,8 +1,28 @@
 import express from 'express'
 import { processChat, getChatHistory } from '../services/geminiService.js'
 import { authenticateToken } from '../middleware/auth.js'
+import path from 'path'
+import fs from 'fs'
+import jwt from 'jsonwebtoken'
+import { getSecret } from '../config/secret.js'
+import { fileURLToPath } from 'url'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const router = express.Router()
+
+router.get('/image-token', authenticateToken, (req, res) => {
+  try {
+    // Generate a short-lived token specifically for image access
+    const imageToken = jwt.sign(
+      { id: req.user.id, purpose: 'image_access' },
+      getSecret(),
+      { expiresIn: '1h' }
+    )
+    res.json({ imageToken })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
 
 router.post('/send', authenticateToken, async (req, res) => {
   try {
@@ -28,6 +48,31 @@ router.get('/history', authenticateToken, (req, res) => {
     res.json(history)
   } catch (error) {
     res.status(500).json({ error: error.message })
+  }
+})
+
+router.get('/image/:filename', authenticateToken, (req, res) => {
+  const { filename } = req.params
+
+  // Specialized security: Only allow tokens specifically for image access in URL
+  if (req.query.token && req.user.purpose !== 'image_access') {
+    return res.status(403).json({ error: 'Regular tokens not allowed in URL' })
+  }
+
+  // Basic security check to prevent path traversal
+  if (
+    filename.includes('..') ||
+    filename.includes('/') ||
+    filename.includes('\\')
+  ) {
+    return res.status(400).json({ error: 'Invalid filename' })
+  }
+
+  const filePath = path.join(__dirname, '../../chat/image', filename)
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath)
+  } else {
+    res.status(404).json({ error: 'Image not found' })
   }
 })
 
