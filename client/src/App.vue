@@ -24,7 +24,7 @@ const toggleTheme = () => {
 
 <template>
   <div
-    class="h-screen flex flex-col transition-colors duration-300 overflow-hidden bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+    class="h-[100dvh] flex flex-col transition-colors duration-300 overflow-hidden bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
   >
     <header
       class="p-4 bg-white dark:bg-gray-800 shadow flex justify-between items-center z-50"
