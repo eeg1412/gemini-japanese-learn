@@ -5,13 +5,13 @@
 1. 安装依赖并同时启动前后端开发环境：
 
 ```bash
-npm run dev
+yarn run dev
 ```
 
 2. 生成 JWT Secret（单独文件）：
 
 ```bash
-npm run keygen
+yarn run keygen
 ```
 
 ## 环境变量
@@ -38,7 +38,7 @@ JWT 密钥文件由后端自动管理，位置为 `server/secret.key`，请勿�
 - 推荐在项目根目录运行开发命令：
 
 ```bash
-npm run dev
+yarn run dev
 ```
 
 ## 备注
@@ -52,11 +52,11 @@ npm run dev
 
 1. Install dependencies and run both frontend/backend:
    ```bash
-   npm run dev
+   yarn run dev
    ```
 2. Generate JWT Secret (Separate file):
    ```bash
-   npm run keygen
+   yarn run keygen
    ```
 
 ## Environment Variables
