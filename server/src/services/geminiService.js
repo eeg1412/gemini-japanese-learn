@@ -193,7 +193,7 @@ export async function processChat(input, imageBase64, customInstruction = '') {
   ).run('user', input, imagePath, now)
 
   try {
-    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
+    const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
     const model = getGenAI().getGenerativeModel({
       model: modelName,
       tools: tools
