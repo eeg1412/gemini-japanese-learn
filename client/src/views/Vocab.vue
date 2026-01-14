@@ -212,13 +212,18 @@ onMounted(() => {
             >生词本 ({{ vocabList.length }})</span
           >
         </h2>
-        <!-- Mobile Sort Icon -->
+        <!-- Sort Button (Mobile & Desktop) -->
         <button
           @click="toggleSort"
-          class="sm:hidden p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600"
-          :title="sortOrder === 'desc' ? '最新' : '最旧'"
+          class="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-100 dark:border-blue-800/50"
+          :title="sortOrder === 'desc' ? '按时间降序' : '按时间升序'"
         >
-          <span class="material-icons text-sm">sort</span>
+          <span class="material-icons text-sm sm:text-base">
+            {{ sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </span>
+          <span class="font-medium">{{
+            sortOrder === 'desc' ? '最新' : '最旧'
+          }}</span>
         </button>
       </div>
 
@@ -265,14 +270,6 @@ onMounted(() => {
             <span class="hidden sm:inline">未收藏</span>
           </button>
         </div>
-        <!-- Desktop Sort Button -->
-        <button
-          @click="toggleSort"
-          class="hidden sm:flex items-center gap-1 text-sm px-3 py-1 bg-blue-100 dark:bg-blue-900 rounded hover:bg-blue-200"
-        >
-          <span class="material-icons text-sm">sort</span>
-          {{ sortOrder === 'desc' ? '最新' : '最旧' }}
-        </button>
       </div>
     </div>
 
