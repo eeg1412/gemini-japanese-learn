@@ -66,6 +66,13 @@ onMounted(() => {
           >
             <span class="material-icons text-sm">book</span> 生词本
           </router-link>
+          <router-link
+            to="/grammar"
+            class="hover:text-blue-500 flex items-center gap-1 transition-colors"
+            exact-active-class="text-blue-500 font-bold"
+          >
+            <span class="material-icons text-sm">auto_stories</span> 语法本
+          </router-link>
         </nav>
 
         <!-- Theme Toggle (Always visible in header right) -->
@@ -116,6 +123,14 @@ onMounted(() => {
       >
         <span class="material-icons text-lg">book</span>
         <span class="text-[9px]">生词本</span>
+      </router-link>
+      <router-link
+        to="/grammar"
+        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors"
+        exact-active-class="text-blue-500 font-bold border-t-2 border-blue-500"
+      >
+        <span class="material-icons text-lg">auto_stories</span>
+        <span class="text-[9px]">语法本</span>
       </router-link>
     </nav>
   </div>

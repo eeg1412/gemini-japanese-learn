@@ -31,6 +31,18 @@ export function initDb() {
       image_data TEXT,
       created_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS grammars (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      grammar TEXT UNIQUE NOT NULL,
+      explanation TEXT,
+      structure TEXT,
+      level TEXT,
+      example TEXT,
+      starred INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
   `)
 
   // Lightweight migration for existing DBs

@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const vocabList = ref([])
+const totalCount = ref(0)
 const page = ref(1)
 const hasMore = ref(true)
 const sortOrder = ref('desc')
@@ -95,6 +96,7 @@ const loadVocab = async (isInitial = false) => {
     })
 
     const newItems = res.data.data
+    totalCount.value = res.data.total || 0
 
     if (newItems.length < 20) {
       hasMore.value = false
@@ -209,7 +211,7 @@ onMounted(() => {
         >
           <span class="material-icons text-base sm:text-2xl">menu_book</span>
           <span class="truncate text-sm sm:text-base"
-            >生词本 ({{ vocabList.length }})</span
+            >生词本 ({{ totalCount }})</span
           >
         </h2>
         <!-- Sort Button (Mobile & Desktop) -->

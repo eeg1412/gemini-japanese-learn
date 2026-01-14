@@ -4,6 +4,7 @@ import path from 'path'
 import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import { upsertVocabulary } from './vocabService.js'
+import { upsertGrammar } from './grammarService.js'
 import db from '../db/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -53,9 +54,9 @@ const tools = [
   {
     functionDeclarations: [
       {
-        name: 'save_vocabularies',
+        name: 'save_learning_content',
         description:
-          '批量将日语生词保存到用户的生词本中。请分析对话内容，提取所有值得学习的核心词汇，并一次性调用此工具。',
+          '批量将日语生词和语法点保存到用户的生词本和语法本中。请分析对话内容，提取所有值得学习的核心词汇和语法，并一次性调用此工具。',
         parameters: {
           type: 'OBJECT',
           properties: {
@@ -121,9 +122,37 @@ const tools = [
                 },
                 required: ['original', 'reading', 'meaning', 'example', 'type']
               }
+            },
+            grammars: {
+              type: 'ARRAY',
+              description: '语法列表',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  grammar: {
+                    type: 'STRING',
+                    description:
+                      '语法点名称或句型（如：～てはいけない）。这是语法库中的唯一标识。'
+                  },
+                  explanation: {
+                    type: 'STRING',
+                    description: '语法的中文讲解'
+                  },
+                  structure: {
+                    type: 'STRING',
+                    description:
+                      '语法的接续形式/结构（如：动词て形+はいけない）'
+                  },
+                  example: {
+                    type: 'STRING',
+                    description:
+                      '包含该语法的日语例句，所有汉字部分请标注振假名'
+                  }
+                },
+                required: ['grammar', 'explanation', 'structure', 'example']
+              }
             }
-          },
-          required: ['vocabularies']
+          }
         }
       }
     ]
@@ -184,7 +213,7 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 -将输入的日语翻译为简体中文。
 -有错误时纠正用户的错误。
 -回复内容精炼，无重复，无多余内容，绝对的权威，使用最少的token用中文进行解释。
--使用工具函数 \`save_vocabularies\` 一次性保存文本中所有出现的关键生词。
+-使用工具函数 \`save_learning_content\` 一次性保存文本中所有出现的关键生词和语法点。
 `.trim()
 
     let userPromptOverride = ''
@@ -246,14 +275,17 @@ ${customInstruction}
       const functionResponses = []
 
       for (const call of functionCalls) {
-        if (call.name === 'save_vocabularies') {
-          const { vocabularies } = call.args
+        if (call.name === 'save_learning_content') {
+          const { vocabularies, grammars } = call.args
+          const results = { vocabularies: [], grammars: [] }
+
           console.log(
-            'Calling tool save_vocabularies with count:',
-            vocabularies?.length
+            'Calling tool save_learning_content with vocab count:',
+            vocabularies?.length,
+            'grammar count:',
+            grammars?.length
           )
 
-          const results = []
           if (Array.isArray(vocabularies)) {
             for (const vocab of vocabularies) {
               // Map English conjugation keys back to Japanese for persistence/UI
@@ -269,13 +301,20 @@ ${customInstruction}
                 vocab.conjugations = mappedConjugations
               }
               const saved = upsertVocabulary(vocab)
-              results.push(saved)
+              results.vocabularies.push(saved)
+            }
+          }
+
+          if (Array.isArray(grammars)) {
+            for (const grammar of grammars) {
+              const saved = upsertGrammar(grammar)
+              results.grammars.push(saved)
             }
           }
 
           functionResponses.push({
             functionResponse: {
-              name: 'save_vocabularies',
+              name: 'save_learning_content',
               response: { results }
             }
           })

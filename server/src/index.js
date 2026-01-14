@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import { initDb } from './db/index.js'
 import authRoutes from './routes/auth.js'
 import vocabRoutes from './routes/vocab.js'
+import grammarRoutes from './routes/grammar.js'
 import chatRoutes from './routes/chat.js'
 // We will add other routes later
 
@@ -26,6 +27,7 @@ initDb()
 app.use('/api/auth', authRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/vocab', vocabRoutes)
+app.use('/api/grammar', grammarRoutes)
 
 // Define static path
 const publicPath = path.join(__dirname, '../public')
