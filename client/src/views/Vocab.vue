@@ -56,9 +56,12 @@ const speakJapanese = text => {
   window.speechSynthesis.speak(utter)
 }
 
-const loadVocab = async (isInitial = false) => {
-  if (!hasMore.value && !isInitial) return
+const isLoading = ref(false)
 
+const loadVocab = async (isInitial = false) => {
+  if ((!hasMore.value && !isInitial) || isLoading.value) return
+
+  isLoading.value = true
   try {
     const res = await axios.get('/api/vocab', {
       params: {
@@ -86,6 +89,8 @@ const loadVocab = async (isInitial = false) => {
     }
   } catch (e) {
     console.error(e)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -147,13 +152,22 @@ const scrollToTop = () => {
   })
 }
 
+let scrollTimer = null
 const handleScroll = () => {
-  const { scrollTop, scrollHeight, clientHeight } = container.value
-  // If we scroll to the bottom, load more
-  if (scrollTop + clientHeight >= scrollHeight - 5 && hasMore.value) {
-    page.value++
-    loadVocab()
-  }
+  if (scrollTimer) return
+  scrollTimer = setTimeout(() => {
+    const { scrollTop, scrollHeight, clientHeight } = container.value
+    // If we scroll to the bottom, load more
+    if (
+      scrollTop + clientHeight >= scrollHeight - 5 &&
+      hasMore.value &&
+      !isLoading.value
+    ) {
+      page.value++
+      loadVocab()
+    }
+    scrollTimer = null
+  }, 200)
 }
 
 onMounted(() => {
@@ -339,7 +353,15 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="!hasMore" class="text-center text-gray-400 text-sm py-2">
+      <div v-if="isLoading" class="flex justify-center py-2">
+        <div
+          class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"
+        ></div>
+      </div>
+      <div
+        v-if="!hasMore && !isLoading"
+        class="text-center text-gray-400 text-sm py-2"
+      >
         -- 已全部加载 --
       </div>
     </div>

@@ -13,13 +13,21 @@ app.use(pinia)
 app.use(router)
 
 // Global axios interceptor for 403 errors
+let isShowingAlert = false
 axios.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 403) {
       const auth = useAuthStore()
-      alert('登录信息过期，请重新登录')
-      auth.logout()
+      if (!isShowingAlert) {
+        isShowingAlert = true
+        alert('登录信息过期，请重新登录')
+        auth.logout()
+        // Reset flag after a short delay
+        setTimeout(() => {
+          isShowingAlert = false
+        }, 1000)
+      }
     }
     return Promise.reject(error)
   }

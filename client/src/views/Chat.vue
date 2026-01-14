@@ -19,6 +19,7 @@ const imagePreview = ref(null)
 const customPrompt = ref('')
 const showConfig = ref(false)
 const isLoading = ref(false)
+const isHistoryLoading = ref(false)
 const page = ref(1)
 const hasMore = ref(true)
 const chatContainer = ref(null)
@@ -40,6 +41,28 @@ const getImageUrl = imageData => {
   if (imageData.startsWith('data:')) return imageData
   // Use specialized image token
   return `/api/chat/image/${imageData}?token=${imageToken.value || ''}`
+}
+
+const openImage = async imageData => {
+  if (!imageData) return
+  if (imageData.startsWith('data:')) {
+    const newWindow = window.open()
+    newWindow.document.write(`<img src="${imageData}" style="max-width:100%">`)
+    return
+  }
+
+  try {
+    // Fetch a fresh token for the new window
+    const res = await axios.get('/api/chat/image-token', {
+      headers: { Authorization: `Bearer ${auth.token}` }
+    })
+    const newToken = res.data.imageToken
+    const url = `/api/chat/image/${imageData}?token=${newToken}`
+    window.open(url, '_blank')
+  } catch (e) {
+    console.error('Failed to open image:', e)
+    alert('预览图片失败')
+  }
 }
 
 const inputEl = ref(null)
@@ -80,8 +103,9 @@ const autoResizeTextarea = (el, maxRows = 5) => {
 }
 
 const loadHistory = async (isInitial = false) => {
-  if (!hasMore.value && !isInitial) return
+  if ((!hasMore.value && !isInitial) || isHistoryLoading.value) return
 
+  isHistoryLoading.value = true
   try {
     const res = await axios.get('/api/chat/history', {
       params: { page: page.value, limit: 20 },
@@ -110,6 +134,8 @@ const loadHistory = async (isInitial = false) => {
     }
   } catch (e) {
     console.error(e)
+  } finally {
+    isHistoryLoading.value = false
   }
 }
 
@@ -125,15 +151,20 @@ const scrollToBottom = (force = true) => {
   })
 }
 
+let scrollTimer = null
 const handleScroll = () => {
-  if (
-    chatContainer.value.scrollTop === 0 &&
-    !isLoading.value &&
-    hasMore.value
-  ) {
-    page.value++
-    loadHistory()
-  }
+  if (scrollTimer) return
+  scrollTimer = setTimeout(() => {
+    if (
+      chatContainer.value.scrollTop === 0 &&
+      !isHistoryLoading.value &&
+      hasMore.value
+    ) {
+      page.value++
+      loadHistory()
+    }
+    scrollTimer = null
+  }, 200)
 }
 
 const selectImage = e => {
@@ -292,7 +323,15 @@ watch(showConfig, newVal => {
       @scroll="handleScroll"
       class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 min-h-0"
     >
-      <div v-if="!hasMore" class="text-center text-gray-400 text-sm py-2">
+      <div v-if="isHistoryLoading" class="flex justify-center py-2">
+        <div
+          class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"
+        ></div>
+      </div>
+      <div
+        v-if="!hasMore && !isHistoryLoading"
+        class="text-center text-gray-400 text-sm py-2"
+      >
         没有更多历史记录
       </div>
 
@@ -312,7 +351,8 @@ watch(showConfig, newVal => {
           <img
             v-if="msg.image_data"
             :src="getImageUrl(msg.image_data)"
-            class="w-full max-w-[100px] h-[100px] rounded mb-2 object-contain bg-gray-300"
+            @click="openImage(msg.image_data)"
+            class="w-full max-w-[100px] h-[100px] rounded mb-2 object-contain bg-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
           />
           <div v-if="msg.loading" class="animate-pulse">思考中...</div>
           <div v-else-if="msg.role === 'user'">
@@ -383,7 +423,7 @@ watch(showConfig, newVal => {
           @keydown.enter.exact.prevent="sendMessage"
           @input="e => autoResizeTextarea(e.target)"
           placeholder="输入内容"
-          class="flex-1 p-2 border rounded resize-none focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 min-h-[1.5rem] max-h-[8.5rem]"
+          class="flex-1 p-2 border rounded resize-none focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 min-h-[1.5rem] max-h-[8.5rem] h-[40px]"
         ></textarea>
         <button
           @click="sendMessage"
