@@ -287,90 +287,35 @@ onMounted(() => {
         :key="word.id"
         class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition"
       >
-        <!-- Word Header (Responsive) -->
+        <!-- Top Row: Word & Actions -->
         <div class="flex justify-between items-start gap-2">
-          <!-- Left: Word Content -->
-          <div class="flex-1 min-w-0">
-            <!-- Word with Pronunciation -->
-            <div class="flex items-baseline gap-1 flex-wrap">
-              <h3
-                class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100"
-              >
-                {{ word.original }}
-              </h3>
-              <span class="text-blue-600 dark:text-blue-400 text-xs sm:text-sm">
-                [{{ word.reading }}]
-              </span>
-              <span
-                class="px-1.5 py-0.5 rounded text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex-shrink-0"
-              >
-                {{ word.type }}
-              </span>
-              <!-- Verb Category -->
-              <span
-                v-if="word.verb_category"
-                @click.stop="showCategoryDescription(word.verb_category)"
-                class="px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex-shrink-0 cursor-help flex items-center gap-0.5"
-              >
-                {{ word.verb_category }}
-                <span class="material-icons text-xs">info</span>
-              </span>
-            </div>
-            <!-- Meaning -->
-            <p
-              class="text-gray-700 dark:text-gray-300 mt-1 font-medium text-sm sm:text-base"
+          <div class="flex items-baseline gap-1 sm:gap-2 flex-wrap min-w-0">
+            <h3
+              class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100"
             >
-              {{ word.meaning }}
-            </p>
-            <!-- Example (Hidden on small screens) -->
-            <div
-              class="hidden sm:block mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded line-clamp-2"
+              {{ word.original }}
+            </h3>
+            <span class="text-blue-600 dark:text-blue-400 text-xs sm:text-sm">
+              [{{ word.reading }}]
+            </span>
+            <span
+              class="px-1.5 py-0.5 rounded text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex-shrink-0"
             >
-              例句: {{ word.example }}
-            </div>
-
-            <!-- Conjugations Toggle -->
-            <div v-if="word.conjugations" class="mt-2">
-              <button
-                @click.stop="toggleConjugations(word.id)"
-                class="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 flex items-center gap-1"
-              >
-                <span class="material-icons text-sm">{{
-                  expandedConjugations.has(word.id)
-                    ? 'keyboard_arrow_up'
-                    : 'keyboard_arrow_down'
-                }}</span>
-                {{
-                  expandedConjugations.has(word.id) ? '收起' : '查看'
-                }}动词活用
-              </button>
-
-              <!-- Conjugations Grid -->
-              <div
-                v-if="expandedConjugations.has(word.id)"
-                class="mt-2 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-700 transition-all animate-in fade-in slide-in-from-top-1"
-              >
-                <div
-                  v-for="(val, key) in word.conjugations"
-                  :key="key"
-                  class="flex flex-col border-b border-gray-100 dark:border-gray-800 pb-1"
-                >
-                  <span
-                    class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-tight"
-                    >{{ key }}</span
-                  >
-                  <span
-                    class="text-xs sm:text-sm text-gray-700 dark:text-gray-200 font-medium break-all"
-                    >{{ val || '-' }}</span
-                  >
-                </div>
-              </div>
-            </div>
+              {{ word.type }}
+            </span>
+            <!-- Verb Category -->
+            <span
+              v-if="word.verb_category"
+              @click.stop="showCategoryDescription(word.verb_category)"
+              class="px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex-shrink-0 cursor-help flex items-center gap-0.5"
+            >
+              {{ word.verb_category }}
+              <span class="material-icons text-xs">info</span>
+            </span>
           </div>
 
-          <!-- Right: Action Buttons -->
+          <!-- Right: Action Buttons (Fixed width) -->
           <div class="flex gap-1 flex-shrink-0">
-            <!-- Speak Button -->
             <button
               @click.stop="speakJapanese(word.original)"
               class="p-1 sm:p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
@@ -378,7 +323,6 @@ onMounted(() => {
             >
               <span class="material-icons text-base">volume_up</span>
             </button>
-            <!-- Star Button -->
             <button
               @click.stop="toggleStar(word)"
               :class="[
@@ -393,7 +337,6 @@ onMounted(() => {
                 word.starred ? 'star' : 'star_border'
               }}</span>
             </button>
-            <!-- Delete Button -->
             <button
               @click="deleteVocab(word.id)"
               class="p-1 sm:p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -404,20 +347,69 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Mobile Example (shown below) -->
-        <div
-          class="sm:hidden mt-2 text-xs text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded line-clamp-2"
-        >
-          例句: {{ word.example }}
-        </div>
+        <!-- Details Block -->
+        <div class="mt-2 space-y-2">
+          <!-- Meaning -->
+          <p
+            class="text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+          >
+            {{ word.meaning }}
+          </p>
 
-        <!-- Timestamp -->
-        <div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-          {{
-            new Date(word.updated_at).toLocaleString('zh-CN', {
-              hour12: false
-            })
-          }}
+          <!-- Example (Unified) -->
+          <div
+            v-if="word.example"
+            class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded"
+          >
+            例句: {{ word.example }}
+          </div>
+
+          <!-- Conjugations Toggle -->
+          <div v-if="word.conjugations">
+            <button
+              @click.stop="toggleConjugations(word.id)"
+              class="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 flex items-center gap-1"
+            >
+              <span class="material-icons text-sm">{{
+                expandedConjugations.has(word.id)
+                  ? 'keyboard_arrow_up'
+                  : 'keyboard_arrow_down'
+              }}</span>
+              {{ expandedConjugations.has(word.id) ? '收起' : '查看' }}动词活用
+            </button>
+
+            <!-- Conjugations Grid (3 columns) -->
+            <div
+              v-if="expandedConjugations.has(word.id)"
+              class="mt-2 grid grid-cols-4 gap-2 sm:gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-700"
+            >
+              <div
+                v-for="(val, key) in word.conjugations"
+                :key="key"
+                class="flex flex-col border-b border-gray-100 dark:border-gray-800 pb-1"
+              >
+                <span
+                  class="text-[12px] text-gray-400 dark:text-gray-400 uppercase tracking-tight"
+                  >{{ key }}</span
+                >
+                <span
+                  class="text-xs sm:text-sm text-gray-700 dark:text-gray-200 font-medium break-all"
+                  >{{ val || '-' }}</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Timestamp -->
+          <div
+            class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 pt-1"
+          >
+            {{
+              new Date(word.updated_at).toLocaleString('zh-CN', {
+                hour12: false
+              })
+            }}
+          </div>
         </div>
       </div>
 
