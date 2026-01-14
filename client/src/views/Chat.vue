@@ -239,7 +239,8 @@ const sendMessage = async () => {
         customPrompt: customPrompt.value
       },
       {
-        headers: { Authorization: `Bearer ${auth.token}` }
+        headers: { Authorization: `Bearer ${auth.token}` },
+        timeout: 300000 // 设置超时为 5 分钟
       }
     )
 
