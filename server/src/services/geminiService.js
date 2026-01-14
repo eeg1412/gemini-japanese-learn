@@ -81,7 +81,7 @@ const tools = [
                   example: {
                     type: 'STRING',
                     description:
-                      '一个包含该单词的典型日语例句，汉字部分请标注振假名'
+                      '一个包含该单词的典型日语例句，所有汉字部分请标注振假名'
                   },
                   type: {
                     type: 'STRING',
