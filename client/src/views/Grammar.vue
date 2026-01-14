@@ -163,7 +163,7 @@ onMounted(() => {
         <!-- Sort Button (Mobile & Desktop) -->
         <button
           @click="toggleSort"
-          class="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors border border-green-100 dark:border-green-800/50"
+          class="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-100 dark:border-blue-800/50"
           :title="sortOrder === 'desc' ? '按时间降序' : '按时间升序'"
         >
           <span class="material-icons text-sm sm:text-base">
@@ -186,7 +186,7 @@ onMounted(() => {
             :class="[
               'p-1 sm:p-1.5 rounded border font-medium flex items-center gap-1 text-xs sm:text-sm',
               filterMode === 'all'
-                ? 'bg-green-600 text-white border-green-600'
+                ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
             ]"
           >
@@ -198,7 +198,7 @@ onMounted(() => {
             :class="[
               'p-1 sm:p-1.5 rounded border font-medium flex items-center gap-1 text-xs sm:text-sm',
               filterMode === 'starred'
-                ? 'bg-green-600 text-white border-green-600'
+                ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
             ]"
           >
@@ -210,7 +210,7 @@ onMounted(() => {
             :class="[
               'p-1 sm:p-1.5 rounded border font-medium flex items-center gap-1 text-xs sm:text-sm',
               filterMode === 'unstarred'
-                ? 'bg-green-600 text-white border-green-600'
+                ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
             ]"
           >
@@ -230,7 +230,7 @@ onMounted(() => {
       <div
         v-for="item in grammarList"
         :key="item.id"
-        class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-md border-l-4 border-green-500 hover:shadow-lg transition"
+        class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition"
       >
         <!-- Top Row: Grammar & Actions -->
         <div class="flex justify-between items-start gap-2">
@@ -274,9 +274,6 @@ onMounted(() => {
           <div
             class="text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
           >
-            <span class="text-xs text-gray-500 dark:text-gray-400 block mb-0.5"
-              >含义:</span
-            >
             {{ item.explanation }}
           </div>
 
@@ -291,7 +288,7 @@ onMounted(() => {
           <!-- Example (Unified) -->
           <div
             v-if="item.example"
-            class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-green-50 dark:bg-green-900/20 p-2 rounded"
+            class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded"
           >
             例句: {{ item.example }}
           </div>
@@ -311,7 +308,7 @@ onMounted(() => {
 
       <div v-if="isLoading" class="flex justify-center py-2">
         <div
-          class="animate-spin rounded-full h-5 w-5 border-2 border-green-500 border-t-transparent"
+          class="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"
         ></div>
       </div>
       <div

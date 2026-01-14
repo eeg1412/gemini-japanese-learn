@@ -24,6 +24,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const chatContainer = ref(null)
 const imageToken = ref(null)
+let refreshTimer = null
 
 const fetchImageToken = async () => {
   try {
@@ -35,6 +36,10 @@ const fetchImageToken = async () => {
     console.error('Failed to fetch image token:', e)
   }
 }
+
+onUnmounted(() => {
+  if (refreshTimer) clearInterval(refreshTimer)
+})
 
 const getImageUrl = imageData => {
   if (!imageData) return ''
@@ -266,9 +271,7 @@ onMounted(async () => {
   // 获取图片访问令牌
   await fetchImageToken()
   // 每50分钟刷新一次 (有效期1小时)
-  const timer = setInterval(fetchImageToken, 50 * 60 * 1000)
-
-  onUnmounted(() => clearInterval(timer))
+  refreshTimer = setInterval(fetchImageToken, 50 * 60 * 1000)
 
   // 从 localStorage 恢复自定义系统提示词
   const savedPrompt = localStorage.getItem('customPrompt')
@@ -335,31 +338,61 @@ watch(showConfig, newVal => {
         没有更多历史记录
       </div>
 
-      <div
-        v-for="(msg, index) in messages"
-        :key="index"
-        :class="['flex', msg.role === 'user' ? 'justify-end' : 'justify-start']"
-      >
+      <template v-for="(msg, index) in messages" :key="index">
+        <div
+          v-if="msg.role === 'user' && index !== 0"
+          class="w-full h-px bg-gray-200 dark:bg-gray-700 my-4"
+        ></div>
         <div
           :class="[
-            'max-w-[80%] min-w-0 rounded-lg p-3 shadow-md break-words',
-            msg.role === 'user'
-              ? 'bg-blue-600 text-white whitespace-pre-wrap'
-              : 'bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 prose dark:prose-invert prose-sm max-w-none'
+            'flex',
+            msg.role === 'user' ? 'justify-end' : 'justify-start'
           ]"
         >
-          <img
-            v-if="msg.image_data"
-            :src="getImageUrl(msg.image_data)"
-            @click="openImage(msg.image_data)"
-            class="w-full max-w-[100px] h-[100px] rounded mb-2 object-contain bg-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
-          />
-          <div v-if="msg.loading" class="animate-pulse">思考中...</div>
-          <div v-else-if="msg.role === 'user'">
-            {{ msg.content }}
+          <div
+            :class="[
+              'max-w-[80%] min-w-0 rounded-lg p-3 shadow-md break-words flex flex-col',
+              msg.role === 'user'
+                ? 'bg-blue-600 text-white whitespace-pre-wrap'
+                : 'bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 prose dark:prose-invert prose-sm max-w-none'
+            ]"
+          >
+            <img
+              v-if="msg.image_data"
+              :src="getImageUrl(msg.image_data)"
+              @click="openImage(msg.image_data)"
+              class="w-full max-w-[100px] h-[100px] rounded mb-2 object-contain bg-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
+            />
+            <div v-if="msg.loading" class="animate-pulse">思考中...</div>
+            <div v-else-if="msg.role === 'user'">
+              {{ msg.content }}
+            </div>
+            <div v-else v-html="md.render(msg.content)"></div>
+            <div
+              :class="[
+                'text-[10px] mt-1 text-right select-none',
+                msg.role === 'user'
+                  ? 'text-blue-200'
+                  : 'text-gray-400 dark:text-gray-500'
+              ]"
+            >
+              {{
+                new Date(msg.created_at || Date.now()).toLocaleString('zh-CN', {
+                  hour12: false
+                })
+              }}
+            </div>
           </div>
-          <div v-else v-html="md.render(msg.content)"></div>
         </div>
+      </template>
+
+      <div
+        v-if="messages.length > 0 && !isLoading"
+        class="w-full flex items-center justify-center gap-4 my-6 text-xs text-gray-400"
+      >
+        <div class="h-px bg-gray-300 dark:bg-gray-700 flex-1"></div>
+        <span>以下是新的会话</span>
+        <div class="h-px bg-gray-300 dark:bg-gray-700 flex-1"></div>
       </div>
     </div>
 

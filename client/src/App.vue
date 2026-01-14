@@ -110,27 +110,27 @@ onMounted(() => {
     >
       <router-link
         to="/"
-        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors"
-        exact-active-class="text-blue-500 font-bold border-t-2 border-blue-500"
+        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors border-t-2 border-blue-500/0"
+        exact-active-class="text-blue-500 font-bold border-t-2 !border-blue-500"
       >
         <span class="material-icons text-lg">chat</span>
-        <span class="text-[9px]">聊天</span>
+        <span class="text-[12px]">聊天</span>
       </router-link>
       <router-link
         to="/vocab"
-        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors"
-        exact-active-class="text-blue-500 font-bold border-t-2 border-blue-500"
+        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors border-t-2 border-blue-500/0"
+        exact-active-class="text-blue-500 font-bold border-t-2 !border-blue-500"
       >
         <span class="material-icons text-lg">book</span>
-        <span class="text-[9px]">生词本</span>
+        <span class="text-[12px]">生词本</span>
       </router-link>
       <router-link
         to="/grammar"
-        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors"
-        exact-active-class="text-blue-500 font-bold border-t-2 border-blue-500"
+        class="flex flex-col items-center gap-0.5 p-1 flex-1 hover:text-blue-500 transition-colors border-t-2 border-blue-500/0"
+        exact-active-class="text-blue-500 font-bold border-t-2 !border-blue-500"
       >
         <span class="material-icons text-lg">auto_stories</span>
-        <span class="text-[9px]">语法本</span>
+        <span class="text-[12px]">语法本</span>
       </router-link>
     </nav>
   </div>
