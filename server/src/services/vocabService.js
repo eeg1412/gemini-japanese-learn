@@ -5,9 +5,12 @@ export const upsertVocabulary = ({
   reading,
   meaning,
   example,
-  type
+  type,
+  verb_category,
+  conjugations
 }) => {
   const now = Date.now()
+  const conjugationsStr = conjugations ? JSON.stringify(conjugations) : null
 
   // Check existence
   const existing = db
@@ -18,27 +21,48 @@ export const upsertVocabulary = ({
     db.prepare(
       `
       UPDATE vocabularies 
-      SET reading = @reading, meaning = @meaning, example = @example, type = @type, updated_at = @now
+      SET reading = @reading, meaning = @meaning, example = @example, type = @type, 
+          verb_category = @verb_category, conjugations = @conjugationsStr, updated_at = @now
       WHERE original = @original
     `
-    ).run({ original, reading, meaning, example, type, now })
+    ).run({
+      original,
+      reading,
+      meaning,
+      example,
+      type,
+      verb_category,
+      conjugationsStr,
+      now
+    })
     return {
       ...existing,
       reading,
       meaning,
       example,
       type,
+      verb_category,
+      conjugations,
       updated_at: now
     }
   } else {
     const info = db
       .prepare(
         `
-      INSERT INTO vocabularies (original, reading, meaning, example, type, starred, created_at, updated_at)
-      VALUES (@original, @reading, @meaning, @example, @type, 0, @now, @now)
+      INSERT INTO vocabularies (original, reading, meaning, example, type, verb_category, conjugations, starred, created_at, updated_at)
+      VALUES (@original, @reading, @meaning, @example, @type, @verb_category, @conjugationsStr, 0, @now, @now)
     `
       )
-      .run({ original, reading, meaning, example, type, now })
+      .run({
+        original,
+        reading,
+        meaning,
+        example,
+        type,
+        verb_category,
+        conjugationsStr,
+        now
+      })
     return {
       id: info.lastInsertRowid,
       original,
@@ -46,6 +70,8 @@ export const upsertVocabulary = ({
       meaning,
       example,
       type,
+      verb_category,
+      conjugations,
       starred: 0,
       created_at: now,
       updated_at: now
@@ -80,12 +106,18 @@ export const getVocabularies = ({
     )
     .all(limit, offset)
 
+  // Parse conjugations JSON
+  const parsedRows = rows.map(row => ({
+    ...row,
+    conjugations: row.conjugations ? JSON.parse(row.conjugations) : null
+  }))
+
   const countResult = db
     .prepare(`SELECT COUNT(*) as count FROM vocabularies ${whereClause}`)
     .get()
 
   return {
-    data: rows,
+    data: parsedRows,
     total: countResult.count,
     page: Number(page),
     limit: Number(limit)

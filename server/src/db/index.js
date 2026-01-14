@@ -17,6 +17,8 @@ export function initDb() {
       meaning TEXT,
       example TEXT,
       type TEXT,
+      verb_category TEXT,
+      conjugations TEXT,
       starred INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
@@ -38,6 +40,14 @@ export function initDb() {
     db.exec(
       'ALTER TABLE vocabularies ADD COLUMN starred INTEGER NOT NULL DEFAULT 0'
     )
+  }
+  const hasVerbCategory = vocabColumns.some(c => c.name === 'verb_category')
+  if (!hasVerbCategory) {
+    db.exec('ALTER TABLE vocabularies ADD COLUMN verb_category TEXT')
+  }
+  const hasConjugations = vocabColumns.some(c => c.name === 'conjugations')
+  if (!hasConjugations) {
+    db.exec('ALTER TABLE vocabularies ADD COLUMN conjugations TEXT')
   }
   console.log('Database initialized.')
 }

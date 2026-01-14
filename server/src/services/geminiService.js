@@ -26,6 +26,29 @@ function getGenAI() {
   return genAIInstance
 }
 
+const CONJUGATION_MAP = {
+  dict: '辞书形',
+  masu: 'ます形',
+  nai: 'ない形',
+  ta: 'た形',
+  te: 'て形',
+  ba: 'ば形',
+  tara: 'たら形',
+  volitional: '意志形',
+  imperative: '命令形',
+  prohibitive: '禁止形',
+  potential: '可能形',
+  passive: '被动形',
+  causative: '使役形',
+  causative_passive: '使役被动形',
+  conjecture: '推量形',
+  mizen: '未然形',
+  renyo: '连用形',
+  shushi: '终止形',
+  rentai: '连体形',
+  izen: '已然形'
+}
+
 const tools = [
   {
     functionDeclarations: [
@@ -64,6 +87,36 @@ const tools = [
                     type: 'STRING',
                     description:
                       '词性标签。必须采用以下规范之一：[名词, 动词, 形容词, 副词, 助词, 连词, 感叹词, 短语]'
+                  },
+                  verb_category: {
+                    type: 'STRING',
+                    description: '仅限动词',
+                    enum: ['一类动词', '二类动词', '三类动词']
+                  },
+                  conjugations: {
+                    type: 'OBJECT',
+                    description: '仅限动词。必须完整提供19种形式',
+                    properties: {
+                      masu: { type: 'STRING' },
+                      nai: { type: 'STRING' },
+                      ta: { type: 'STRING' },
+                      te: { type: 'STRING' },
+                      ba: { type: 'STRING' },
+                      tara: { type: 'STRING' },
+                      volitional: { type: 'STRING' },
+                      imperative: { type: 'STRING' },
+                      prohibitive: { type: 'STRING' },
+                      potential: { type: 'STRING' },
+                      passive: { type: 'STRING' },
+                      causative: { type: 'STRING' },
+                      causative_passive: { type: 'STRING' },
+                      conjecture: { type: 'STRING' },
+                      mizen: { type: 'STRING' },
+                      renyo: { type: 'STRING' },
+                      shushi: { type: 'STRING' },
+                      rentai: { type: 'STRING' },
+                      izen: { type: 'STRING' }
+                    }
                   }
                 },
                 required: ['original', 'reading', 'meaning', 'example', 'type']
@@ -129,8 +182,8 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 -解释文本中的语法点和词汇。
 -为所有汉字标注振假名，格式为：漢字(かんじ)。
 -将输入的日语翻译为简体中文。
--纠正用户的错误（如果有）。
--回复内容精炼，无重复，无多余内容，使用最少的token用中文进行解释。
+-有错误时纠正用户的错误。
+-回复内容精炼，无重复，无多余内容，绝对的权威，使用最少的token用中文进行解释。
 -使用工具函数 \`save_vocabularies\` 一次性保存文本中所有出现的关键生词。
 `.trim()
 
@@ -203,6 +256,18 @@ ${customInstruction}
           const results = []
           if (Array.isArray(vocabularies)) {
             for (const vocab of vocabularies) {
+              // Map English conjugation keys back to Japanese for persistence/UI
+              if (vocab.conjugations) {
+                const mappedConjugations = {}
+                for (const [engKey, japKey] of Object.entries(
+                  CONJUGATION_MAP
+                )) {
+                  if (vocab.conjugations[engKey]) {
+                    mappedConjugations[japKey] = vocab.conjugations[engKey]
+                  }
+                }
+                vocab.conjugations = mappedConjugations
+              }
               const saved = upsertVocabulary(vocab)
               results.push(saved)
             }
