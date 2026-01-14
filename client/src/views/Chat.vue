@@ -202,6 +202,26 @@ const handlePaste = e => {
   }
 }
 
+const copyStatus = ref({}) // track copy status by message index or unique id
+
+const copyToClipboard = async (text, id) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    copyStatus.value[id] = 'success'
+  } catch (err) {
+    console.error('Failed to copy text: ', err)
+    copyStatus.value[id] = 'error'
+  }
+  setTimeout(() => {
+    delete copyStatus.value[id]
+  }, 1000)
+}
+
+const resendMessage = text => {
+  input.value = text
+  nextTick(() => autoResizeTextarea(inputEl.value))
+}
+
 const sendMessage = async () => {
   if ((!input.value.trim() && !imageFile.value) || isLoading.value) return
 
@@ -369,19 +389,62 @@ watch(showConfig, newVal => {
               {{ msg.content }}
             </div>
             <div v-else v-html="md.render(msg.content)"></div>
+
             <div
-              :class="[
-                'text-[10px] mt-1 text-right select-none',
-                msg.role === 'user'
-                  ? 'text-blue-200'
-                  : 'text-gray-400 dark:text-gray-500'
-              ]"
+              v-if="!msg.loading"
+              class="flex gap-3 items-center justify-between mt-1 pt-1"
             >
-              {{
-                new Date(msg.created_at || Date.now()).toLocaleString('zh-CN', {
-                  hour12: false
-                })
-              }}
+              <div class="flex gap-1 items-center relative">
+                <button
+                  @click="copyToClipboard(msg.content, msg.created_at)"
+                  class="opacity-60 hover:opacity-100 transition-opacity flex items-center"
+                  title="复制内容"
+                >
+                  <span class="material-icons text-[14px]">content_copy</span>
+                </button>
+                <Transition name="fade">
+                  <span
+                    v-if="copyStatus[msg.created_at]"
+                    :class="[
+                      'absolute -top-6 left-[-50%] text-[10px] px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-10',
+                      copyStatus[msg.created_at] === 'success'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-red-500 text-white'
+                    ]"
+                  >
+                    {{
+                      copyStatus[msg.created_at] === 'success'
+                        ? '已复制'
+                        : '失败'
+                    }}
+                  </span>
+                </Transition>
+                <button
+                  v-if="msg.role === 'user'"
+                  @click="resendMessage(msg.content)"
+                  class="opacity-60 hover:opacity-100 transition-opacity flex items-center"
+                  title="重发按钮"
+                >
+                  <span class="material-icons text-[14px]">refresh</span>
+                </button>
+              </div>
+              <div
+                :class="[
+                  'text-[10px] select-none',
+                  msg.role === 'user'
+                    ? 'text-blue-200'
+                    : 'text-gray-400 dark:text-gray-500'
+                ]"
+              >
+                {{
+                  new Date(msg.created_at || Date.now()).toLocaleString(
+                    'zh-CN',
+                    {
+                      hour12: false
+                    }
+                  )
+                }}
+              </div>
             </div>
           </div>
         </div>
@@ -481,5 +544,16 @@ watch(showConfig, newVal => {
 }
 :deep(.prose p:last-child) {
   margin-bottom: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(0, 5px);
 }
 </style>
