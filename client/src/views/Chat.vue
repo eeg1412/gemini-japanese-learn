@@ -4,6 +4,7 @@ import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { useAuthStore } from '../stores/auth'
 import { processImageWithMaxDimension } from '../utils/imageUtils'
+import { formatDate } from '../utils/dateUtils'
 
 const auth = useAuthStore()
 const md = new MarkdownIt({
@@ -469,14 +470,7 @@ watch(showConfig, newVal => {
                       : 'text-gray-400 dark:text-gray-500'
                   ]"
                 >
-                  {{
-                    new Date(msg.created_at || Date.now()).toLocaleString(
-                      'zh-CN',
-                      {
-                        hour12: false
-                      }
-                    )
-                  }}
+                  {{ formatDate(msg.created_at || Date.now()) }}
                 </div>
               </div>
             </div>

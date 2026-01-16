@@ -2,6 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
+import { formatDate } from '../utils/dateUtils'
 
 const auth = useAuthStore()
 const vocabList = ref([])
@@ -509,11 +510,7 @@ onMounted(() => {
           <div
             class="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 pt-1"
           >
-            {{
-              new Date(word.updated_at).toLocaleString('zh-CN', {
-                hour12: false
-              })
-            }}
+            {{ formatDate(word.updated_at) }}
           </div>
         </div>
       </div>
