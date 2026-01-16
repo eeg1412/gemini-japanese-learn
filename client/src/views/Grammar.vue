@@ -22,7 +22,42 @@ const sortLocal = () => {
   })
 }
 
-// Speech removed as requested
+const getJapaneseVoice = () => {
+  const voices = window.speechSynthesis?.getVoices?.() || []
+  return (
+    voices.find(v =>
+      String(v.lang || '')
+        .toLowerCase()
+        .startsWith('ja')
+    ) ||
+    voices.find(v =>
+      String(v.lang || '')
+        .toLowerCase()
+        .includes('ja')
+    ) ||
+    null
+  )
+}
+
+const speakJapanese = text => {
+  if (!text) return
+  if (!('speechSynthesis' in window)) {
+    alert('当前浏览器不支持语音朗读 (SpeechSynthesis)。')
+    return
+  }
+  window.speechSynthesis.cancel()
+
+  // 处理带注音的文本，过滤掉括号中的假名 (如：彼(かれ) -> 彼)
+  const cleanText = text.replace(/\([^)]*\)|（[^）]*）/g, '')
+
+  const utter = new SpeechSynthesisUtterance(cleanText)
+  utter.lang = 'ja-JP'
+  const voice = getJapaneseVoice()
+  if (voice) utter.voice = voice
+  window.speechSynthesis.speak(utter)
+}
+
+// Speech removed as requested -> Re-added for examples as per current user request
 
 const isLoading = ref(false)
 
@@ -289,9 +324,16 @@ onMounted(() => {
           <!-- Example (Unified) -->
           <div
             v-if="item.example"
-            class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded"
+            class="group text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex items-center gap-1"
           >
-            例句: {{ item.example }}
+            <span>例句: {{ item.example }}</span>
+            <button
+              @click.stop="speakJapanese(item.example)"
+              class="text-gray-400 hover:text-blue-500 transition-colors flex items-center"
+              title="朗读例句"
+            >
+              <span class="material-icons text-sm px-0.5">volume_up</span>
+            </button>
           </div>
 
           <!-- Timestamp -->

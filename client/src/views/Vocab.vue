@@ -161,7 +161,12 @@ const speakJapanese = text => {
     return
   }
   window.speechSynthesis.cancel()
-  const utter = new SpeechSynthesisUtterance(text)
+
+  // 处理带注音的文本，过滤掉括号中的假名 (如：彼(かれ) -> 彼)
+  // 这样浏览器引擎可以根据汉字和上下文更准确地发音
+  const cleanText = text.replace(/\([^)]*\)|（[^）]*）/g, '')
+
+  const utter = new SpeechSynthesisUtterance(cleanText)
   utter.lang = 'ja-JP'
   const voice = getJapaneseVoice()
   if (voice) utter.voice = voice
@@ -449,9 +454,16 @@ onMounted(() => {
           <!-- Example (Unified) -->
           <div
             v-if="word.example"
-            class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded"
+            class="group text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex items-center gap-1"
           >
-            例句: {{ word.example }}
+            <span>例句: {{ word.example }}</span>
+            <button
+              @click.stop="speakJapanese(word.example)"
+              class="text-gray-400 hover:text-blue-500 transition-colors flex items-center"
+              title="朗读例句"
+            >
+              <span class="material-icons text-base px-1">volume_up</span>
+            </button>
           </div>
 
           <!-- Conjugations Toggle -->
