@@ -29,6 +29,7 @@ export function initDb() {
       role TEXT CHECK(role IN ('user', 'model')) NOT NULL,
       content TEXT,
       image_data TEXT,
+      usage TEXT,
       created_at INTEGER NOT NULL
     );
 
@@ -60,6 +61,12 @@ export function initDb() {
   const hasConjugations = vocabColumns.some(c => c.name === 'conjugations')
   if (!hasConjugations) {
     db.exec('ALTER TABLE vocabularies ADD COLUMN conjugations TEXT')
+  }
+
+  const chatColumns = db.prepare('PRAGMA table_info(chat_history)').all()
+  const hasUsage = chatColumns.some(c => c.name === 'usage')
+  if (!hasUsage) {
+    db.exec('ALTER TABLE chat_history ADD COLUMN usage TEXT')
   }
   console.log('Database initialized.')
 }

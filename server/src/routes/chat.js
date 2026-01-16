@@ -31,12 +31,15 @@ router.post('/send', authenticateToken, async (req, res) => {
     if (!message && !image) {
       return res.status(400).json({ error: 'Message or image required' })
     }
-    const response = await processChat(
+    const result = await processChat(
       message || 'Image analysis',
       image,
       customPrompt
     )
-    res.json({ response })
+    res.json({
+      response: result.text,
+      usage: result.usage
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

@@ -123,7 +123,16 @@ const loadHistory = async (isInitial = false) => {
     })
 
     // API items are already sorted oldest -> newest for this batch
-    const newMessages = res.data.data
+    const newMessages = res.data.data.map(msg => {
+      if (msg.usage && typeof msg.usage === 'string') {
+        try {
+          msg.usage = JSON.parse(msg.usage)
+        } catch (e) {
+          console.error('Failed to parse usage:', e)
+        }
+      }
+      return msg
+    })
 
     if (res.data.data.length < 20) {
       hasMore.value = false
@@ -292,6 +301,7 @@ const sendMessage = async () => {
     messages.value.push({
       role: 'model',
       content: res.data.response,
+      usage: res.data.usage,
       created_at: Date.now()
     })
 
@@ -461,10 +471,151 @@ watch(showConfig, newVal => {
                   <span class="material-icons text-[14px]">refresh</span>
                 </button>
               </div>
-              <div class="flex items-center">
+              <div class="flex items-center gap-2">
+                <div
+                  v-if="msg.usage"
+                  class="group relative text-[12px] text-gray-400 dark:text-gray-500 cursor-help"
+                >
+                  tokens: {{ msg.usage.totalTokenCount }}
+                  <!-- Tooltip -->
+                  <div
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:flex group-active:flex flex-col gap-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-[12px] p-2 rounded shadow-sm border border-gray-100 dark:border-gray-700 whitespace-nowrap z-20 pointer-events-none"
+                  >
+                    <div class="flex justify-between gap-4">
+                      <span class="text-gray-500 dark:text-gray-400"
+                        >输入 (Prompt):</span
+                      >
+                      <span
+                        class="font-mono font-medium text-blue-600 dark:text-blue-400"
+                        >{{ msg.usage.promptTokenCount }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between gap-4">
+                      <span class="text-gray-500 dark:text-gray-400"
+                        >输出 (Response):</span
+                      >
+                      <span
+                        class="font-mono font-medium text-green-600 dark:text-green-400"
+                        >{{ msg.usage.candidatesTokenCount }}</span
+                      >
+                    </div>
+                    <div
+                      v-if="msg.usage.thoughtsTokenCount"
+                      class="flex justify-between gap-4"
+                    >
+                      <span class="text-gray-500 dark:text-gray-400"
+                        >思考 (Thinking):</span
+                      >
+                      <span
+                        class="font-mono font-medium text-amber-600 dark:text-amber-400"
+                        >{{ msg.usage.thoughtsTokenCount }}</span
+                      >
+                    </div>
+                    <div
+                      v-if="msg.usage.cachedContentTokenCount"
+                      class="flex justify-between gap-4"
+                    >
+                      <span class="text-gray-500 dark:text-gray-400"
+                        >缓存 (Cached):</span
+                      >
+                      <span
+                        class="font-mono font-medium text-cyan-600 dark:text-cyan-400"
+                        >{{ msg.usage.cachedContentTokenCount }}</span
+                      >
+                    </div>
+                    <div
+                      v-if="msg.usage.toolUsePromptTokenCount"
+                      class="flex justify-between gap-4"
+                    >
+                      <span class="text-gray-500 dark:text-gray-400"
+                        >工具提示 (Tool Prompt):</span
+                      >
+                      <span
+                        class="font-mono font-medium text-purple-600 dark:text-purple-400"
+                        >{{ msg.usage.toolUsePromptTokenCount }}</span
+                      >
+                    </div>
+                    <!-- Modality Details (Prompt) -->
+                    <div
+                      v-if="
+                        msg.usage.promptTokensDetails &&
+                        msg.usage.promptTokensDetails.length > 0
+                      "
+                      class="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1 opacity-80"
+                    >
+                      <div
+                        v-for="det in msg.usage.promptTokensDetails"
+                        :key="det.modality"
+                        class="flex justify-between gap-4 text-[12px]"
+                      >
+                        <span class="text-gray-400"
+                          >└ 输入 {{ det.modality }}:</span
+                        >
+                        <span class="font-mono">{{ det.tokenCount }}</span>
+                      </div>
+                    </div>
+                    <!-- Modality Details (Candidates) -->
+                    <div
+                      v-if="
+                        msg.usage.candidatesTokensDetails &&
+                        msg.usage.candidatesTokensDetails.length > 0
+                      "
+                      class="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1 opacity-80"
+                    >
+                      <div
+                        v-for="det in msg.usage.candidatesTokensDetails"
+                        :key="det.modality"
+                        class="flex justify-between gap-4 text-[12px]"
+                      >
+                        <span class="text-gray-400"
+                          >└ 输出 {{ det.modality }}:</span
+                        >
+                        <span class="font-mono">{{ det.tokenCount }}</span>
+                      </div>
+                    </div>
+                    <!-- Modality Details (Cache) -->
+                    <div
+                      v-if="
+                        msg.usage.cacheTokensDetails &&
+                        msg.usage.cacheTokensDetails.length > 0
+                      "
+                      class="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1 opacity-80"
+                    >
+                      <div
+                        v-for="det in msg.usage.cacheTokensDetails"
+                        :key="det.modality"
+                        class="flex justify-between gap-4 text-[12px]"
+                      >
+                        <span class="text-gray-400"
+                          >└ 缓存 {{ det.modality }}:</span
+                        >
+                        <span class="font-mono">{{ det.tokenCount }}</span>
+                      </div>
+                    </div>
+                    <!-- Modality Details (Tool Use) -->
+                    <div
+                      v-if="
+                        msg.usage.toolUsePromptTokensDetails &&
+                        msg.usage.toolUsePromptTokensDetails.length > 0
+                      "
+                      class="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1 opacity-80"
+                    >
+                      <div
+                        v-for="det in msg.usage.toolUsePromptTokensDetails"
+                        :key="det.modality"
+                        class="flex justify-between gap-4 text-[12px]"
+                      >
+                        <span class="text-gray-400"
+                          >└ 工具 {{ det.modality }}:</span
+                        >
+                        <span class="font-mono">{{ det.tokenCount }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div
                   :class="[
-                    'text-[10px] select-none',
+                    'text-[12px] select-none',
                     msg.role === 'user'
                       ? 'text-blue-200'
                       : 'text-gray-400 dark:text-gray-500'

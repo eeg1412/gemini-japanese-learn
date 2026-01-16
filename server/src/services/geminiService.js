@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenAI } from '@google/genai'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
@@ -22,7 +22,7 @@ function getGenAI() {
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not defined in environment variables.')
     }
-    genAIInstance = new GoogleGenerativeAI(apiKey)
+    genAIInstance = new GoogleGenAI({ apiKey })
   }
   return genAIInstance
 }
@@ -198,10 +198,7 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 
   try {
     const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-    const model = getGenAI().getGenerativeModel({
-      model: modelName,
-      tools: tools
-    })
+    const ai = getGenAI()
 
     // Load system prompt
     const promptPath = process.env.USER_PROMPT_PATH
@@ -248,21 +245,55 @@ ${customInstruction}
 
     parts.push({ text: input })
 
-    const chat = model.startChat({
+    const chat = ai.chats.create({
+      model: modelName,
+      config: { tools: tools },
       history: []
     })
 
     const safeText = resp => {
       try {
-        const t = resp?.text?.()
-        return typeof t === 'string' ? t.trim() : ''
+        // Manually extract text to avoid SDK warning when accessing .text on responses with function calls
+        if (resp?.candidates?.[0]?.content?.parts) {
+          return resp.candidates[0].content.parts
+            .map(p => p.text || '')
+            .join('')
+            .trim()
+        }
+        return ''
       } catch {
         return ''
       }
     }
 
-    let result = await chat.sendMessage(parts)
-    let response = result.response
+    let result = await chat.sendMessage({ message: parts })
+    let response = result
+
+    // Track total usage across all turns (including tool calls)
+    let totalUsage = {
+      promptTokenCount: response.usageMetadata?.promptTokenCount || 0,
+      candidatesTokenCount: response.usageMetadata?.candidatesTokenCount || 0,
+      thoughtsTokenCount: response.usageMetadata?.thoughtsTokenCount || 0,
+      cachedContentTokenCount:
+        response.usageMetadata?.cachedContentTokenCount || 0,
+      toolUsePromptTokenCount:
+        response.usageMetadata?.toolUsePromptTokenCount || 0,
+      totalTokenCount: response.usageMetadata?.totalTokenCount || 0,
+      // Use spread to ensure we have a fresh copy of arrays
+      promptTokensDetails: [
+        ...(response.usageMetadata?.promptTokensDetails || [])
+      ],
+      candidatesTokensDetails: [
+        ...(response.usageMetadata?.candidatesTokensDetails || [])
+      ],
+      cacheTokensDetails: [
+        ...(response.usageMetadata?.cacheTokensDetails || [])
+      ],
+      toolUsePromptTokensDetails: [
+        ...(response.usageMetadata?.toolUsePromptTokensDetails || [])
+      ]
+    }
+
     const collectedTexts = []
     const firstText = safeText(response)
     if (firstText) collectedTexts.push(firstText)
@@ -274,8 +305,8 @@ ${customInstruction}
     const maxTurns = 100 // Prevent infinite loops
     let turns = 0
 
-    while (response.functionCalls() && turns < maxTurns) {
-      const functionCalls = response.functionCalls()
+    while (response.functionCalls && turns < maxTurns) {
+      const functionCalls = response.functionCalls
       const functionResponses = []
 
       for (const call of functionCalls) {
@@ -319,15 +350,63 @@ ${customInstruction}
           functionResponses.push({
             functionResponse: {
               name: 'save_learning_content',
-              response: { results }
+              response: { results },
+              id: call.id
             }
           })
         }
       }
 
       // Send function results back to model
-      result = await chat.sendMessage(functionResponses)
-      response = result.response
+      result = await chat.sendMessage({ message: functionResponses })
+      response = result
+
+      // Accumulate usage metadata
+      if (response.usageMetadata) {
+        totalUsage.promptTokenCount +=
+          response.usageMetadata.promptTokenCount || 0
+        totalUsage.candidatesTokenCount +=
+          response.usageMetadata.candidatesTokenCount || 0
+        totalUsage.thoughtsTokenCount +=
+          response.usageMetadata.thoughtsTokenCount || 0
+        totalUsage.cachedContentTokenCount +=
+          response.usageMetadata.cachedContentTokenCount || 0
+        totalUsage.toolUsePromptTokenCount +=
+          response.usageMetadata.toolUsePromptTokenCount || 0
+        totalUsage.totalTokenCount +=
+          response.usageMetadata.totalTokenCount || 0
+
+        // Helper to merge modality details
+        const mergeDetails = (target, source) => {
+          if (!source) return
+          source.forEach(detail => {
+            const existing = target.find(d => d.modality === detail.modality)
+            if (existing) {
+              existing.tokenCount += detail.tokenCount
+            } else {
+              target.push({ ...detail })
+            }
+          })
+        }
+
+        mergeDetails(
+          totalUsage.promptTokensDetails,
+          response.usageMetadata.promptTokensDetails
+        )
+        mergeDetails(
+          totalUsage.candidatesTokensDetails,
+          response.usageMetadata.candidatesTokensDetails
+        )
+        mergeDetails(
+          totalUsage.cacheTokensDetails,
+          response.usageMetadata.cacheTokensDetails
+        )
+        mergeDetails(
+          totalUsage.toolUsePromptTokensDetails,
+          response.usageMetadata.toolUsePromptTokensDetails
+        )
+      }
+
       const t = safeText(response)
       if (t) collectedTexts.push(t)
       turns++
@@ -344,10 +423,13 @@ ${customInstruction}
 
     // Model message
     db.prepare(
-      'INSERT INTO chat_history (role, content, created_at) VALUES (?, ?, ?)'
-    ).run('model', textResponse, Date.now())
+      'INSERT INTO chat_history (role, content, usage, created_at) VALUES (?, ?, ?, ?)'
+    ).run('model', textResponse, JSON.stringify(totalUsage), Date.now())
 
-    return textResponse
+    return {
+      text: textResponse,
+      usage: totalUsage
+    }
   } catch (error) {
     console.error('AI Processing Error:', error)
     // 构造更友好的错误信息抛给前台
