@@ -96,7 +96,8 @@ const tools = [
                   },
                   conjugations: {
                     type: 'OBJECT',
-                    description: '仅限动词。必须完整提供19种形式',
+                    description:
+                      '仅限动词。必须完整提供19种形式。必须准确。禁止出错。',
                     properties: {
                       masu: { type: 'STRING' },
                       nai: { type: 'STRING' },
