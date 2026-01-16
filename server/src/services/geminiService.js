@@ -316,7 +316,6 @@ ${customInstruction}
       for (const call of functionCalls) {
         if (call.name === 'save_learning_content') {
           const { vocabularies, grammars } = call.args
-          const results = { vocabularies: [], grammars: [] }
 
           console.log(
             'Calling tool save_learning_content with vocab count:',
@@ -339,22 +338,22 @@ ${customInstruction}
                 }
                 vocab.conjugations = mappedConjugations
               }
-              const saved = upsertVocabulary(vocab)
-              results.vocabularies.push(saved)
+              upsertVocabulary(vocab)
             }
           }
 
           if (Array.isArray(grammars)) {
             for (const grammar of grammars) {
-              const saved = upsertGrammar(grammar)
-              results.grammars.push(saved)
+              upsertGrammar(grammar)
             }
           }
 
           functionResponses.push({
             functionResponse: {
               name: 'save_learning_content',
-              response: { results },
+              response: {
+                result: '所提供生词语法点已全部录入。'
+              },
               id: call.id
             }
           })
