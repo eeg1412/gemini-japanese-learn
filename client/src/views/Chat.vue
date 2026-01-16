@@ -422,7 +422,7 @@ watch(showConfig, newVal => {
           >
             <!-- Delete Button (Top Right) -->
             <button
-              v-if="!msg.loading"
+              v-if="!msg.loading && msg.id"
               @click="deleteMessage(msg)"
               class="absolute top-0.5 right-0.5 opacity-60 hover:opacity-100 transition-opacity p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center z-10"
               title="删除消息"
