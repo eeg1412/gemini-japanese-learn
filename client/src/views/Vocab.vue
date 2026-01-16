@@ -111,7 +111,7 @@ const CONJUGATION_INFO = {
 const showConjugationDescription = key => {
   const info = CONJUGATION_INFO[key]
   if (info) {
-    alert(`${key} 说明:\n${info.explanation}`)
+    alert(`【${key}】说明:\n${info.explanation}`)
   }
 }
 
@@ -480,7 +480,7 @@ onMounted(() => {
               >
                 <span
                   @click.stop="showConjugationDescription(key)"
-                  class="text-[12px] text-gray-400 dark:text-gray-400 uppercase tracking-tight cursor-help hover:text-blue-500 transition-colors flex items-center gap-0.5"
+                  class="text-[12px] text-gray-400 dark:text-gray-400 uppercase tracking-tight cursor-help hover:text-blue-500 transition-colors flex items-center gap-0.5 w-fit"
                 >
                   {{ key }}
                   <span class="material-icons text-[12px]">info</span>

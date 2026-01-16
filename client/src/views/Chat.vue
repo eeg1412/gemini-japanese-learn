@@ -394,12 +394,22 @@ watch(showConfig, newVal => {
         >
           <div
             :class="[
-              'max-w-[80%] min-w-0 rounded-lg p-3 shadow-md break-words flex flex-col',
+              'max-w-[80%] min-w-0 rounded-lg p-4 shadow-md break-words flex flex-col relative',
               msg.role === 'user'
                 ? 'bg-blue-600 text-white whitespace-pre-wrap'
                 : 'bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 prose dark:prose-invert prose-sm max-w-none'
             ]"
           >
+            <!-- Delete Button (Top Right) -->
+            <button
+              v-if="!msg.loading"
+              @click="deleteMessage(msg)"
+              class="absolute top-0.5 right-0.5 opacity-60 hover:opacity-100 transition-opacity p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center z-10"
+              title="删除消息"
+            >
+              <span class="material-icons text-[12px]">close</span>
+            </button>
+
             <img
               v-if="msg.image_data"
               :src="getImageUrl(msg.image_data)"
@@ -449,30 +459,25 @@ watch(showConfig, newVal => {
                 >
                   <span class="material-icons text-[14px]">refresh</span>
                 </button>
-                <button
-                  @click="deleteMessage(msg)"
-                  class="opacity-60 hover:opacity-100 transition-opacity flex items-center"
-                  title="删除消息"
-                >
-                  <span class="material-icons text-[14px]">delete_forever</span>
-                </button>
               </div>
-              <div
-                :class="[
-                  'text-[10px] select-none',
-                  msg.role === 'user'
-                    ? 'text-blue-200'
-                    : 'text-gray-400 dark:text-gray-500'
-                ]"
-              >
-                {{
-                  new Date(msg.created_at || Date.now()).toLocaleString(
-                    'zh-CN',
-                    {
-                      hour12: false
-                    }
-                  )
-                }}
+              <div class="flex items-center">
+                <div
+                  :class="[
+                    'text-[10px] select-none',
+                    msg.role === 'user'
+                      ? 'text-blue-200'
+                      : 'text-gray-400 dark:text-gray-500'
+                  ]"
+                >
+                  {{
+                    new Date(msg.created_at || Date.now()).toLocaleString(
+                      'zh-CN',
+                      {
+                        hour12: false
+                      }
+                    )
+                  }}
+                </div>
               </div>
             </div>
           </div>
