@@ -38,6 +38,15 @@ router.patch('/:id/star', authenticateToken, (req, res) => {
     if (!updated) {
       return res.status(404).json({ error: 'Vocabulary not found' })
     }
+    // updated.conjugations 如果存在，尝试解析为 JSON
+    if (updated.conjugations) {
+      try {
+        updated.conjugations = JSON.parse(updated.conjugations)
+      } catch (e) {
+        console.error('Failed to parse conjugations JSON:', e)
+        updated.conjugations = null
+      }
+    }
     res.json({ data: updated })
   } catch (error) {
     console.error('Star vocab error:', error)

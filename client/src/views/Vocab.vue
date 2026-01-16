@@ -384,7 +384,7 @@ onMounted(() => {
             >
               <div
                 v-for="(val, key) in word.conjugations"
-                :key="key"
+                :key="word.id + '-' + key"
                 class="flex flex-col border-b border-gray-100 dark:border-gray-800 pb-1"
               >
                 <span
