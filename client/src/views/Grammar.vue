@@ -36,7 +36,8 @@ const loadGrammar = async (isInitial = false) => {
         page: page.value,
         limit: 20,
         sort: sortOrder.value,
-        filter: filterMode.value
+        filter: filterMode.value,
+        offset: isInitial ? 0 : grammarList.value.length
       },
       headers: { Authorization: `Bearer ${auth.token}` }
     })

@@ -61,9 +61,11 @@ export const getGrammars = ({
   page = 1,
   limit = 20,
   sortOrder = 'desc',
-  filter = 'all'
+  filter = 'all',
+  offset: explicitOffset = null
 }) => {
-  const offset = (page - 1) * limit
+  const offset =
+    explicitOffset !== null ? Number(explicitOffset) : (page - 1) * limit
   const order = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
   let whereClause = ''

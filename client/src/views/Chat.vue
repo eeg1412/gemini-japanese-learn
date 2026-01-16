@@ -113,7 +113,11 @@ const loadHistory = async (isInitial = false) => {
   isHistoryLoading.value = true
   try {
     const res = await axios.get('/api/chat/history', {
-      params: { page: page.value, limit: 20 },
+      params: {
+        page: page.value,
+        limit: 20,
+        offset: isInitial ? 0 : messages.value.length
+      },
       headers: { Authorization: `Bearer ${auth.token}` }
     })
 

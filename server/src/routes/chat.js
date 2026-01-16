@@ -44,8 +44,12 @@ router.post('/send', authenticateToken, async (req, res) => {
 
 router.get('/history', authenticateToken, (req, res) => {
   try {
-    const { page, limit } = req.query
-    const history = getChatHistory(Number(page), Number(limit))
+    const { page, limit, offset } = req.query
+    const history = getChatHistory(
+      Number(page),
+      Number(limit),
+      offset !== undefined ? Number(offset) : null
+    )
     res.json(history)
   } catch (error) {
     res.status(500).json({ error: error.message })

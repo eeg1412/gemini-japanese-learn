@@ -10,12 +10,13 @@ const router = express.Router()
 
 router.get('/', authenticateToken, (req, res) => {
   try {
-    const { page, limit, sort, filter } = req.query
+    const { page, limit, sort, filter, offset } = req.query
     const result = getGrammars({
       page,
       limit,
       sortOrder: sort,
-      filter: filter || 'all'
+      filter: filter || 'all',
+      offset: offset !== undefined ? Number(offset) : null
     })
     res.json(result)
   } catch (error) {

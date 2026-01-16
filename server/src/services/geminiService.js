@@ -358,8 +358,9 @@ ${customInstruction}
   }
 }
 
-export function getChatHistory(page = 1, limit = 20) {
-  const offset = (page - 1) * limit
+export function getChatHistory(page = 1, limit = 20, explicitOffset = null) {
+  const offset =
+    explicitOffset !== null ? Number(explicitOffset) : (page - 1) * limit
   const rows = db
     .prepare('SELECT * FROM chat_history ORDER BY id DESC LIMIT ? OFFSET ?')
     .all(limit, offset)
