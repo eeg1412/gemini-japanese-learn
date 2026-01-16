@@ -297,8 +297,17 @@ const sendMessage = async () => {
     )
 
     // Replace loading message
-    messages.value.pop()
+    const modelMsg = messages.value.pop()
+
+    // Update the user message (which is now the last message after pop)
+    const userMsg = messages.value[messages.value.length - 1]
+    if (userMsg && userMsg.role === 'user') {
+      userMsg.id = res.data.userMessageId
+      if (res.data.imagePath) userMsg.image_data = res.data.imagePath
+    }
+
     messages.value.push({
+      id: res.data.modelMessageId,
       role: 'model',
       content: res.data.response,
       usage: res.data.usage,

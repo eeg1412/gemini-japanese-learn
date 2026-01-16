@@ -181,7 +181,8 @@ export async function processChat(input, imageBase64, customInstruction = '') {
     )
     const buffer = Buffer.from(base64Data, 'base64')
     const hash = crypto.createHash('md5').update(buffer).digest('hex')
-    const fileName = `${hash}.${extension}`
+    const timestamp = Date.now()
+    const fileName = `${hash}_${timestamp}.${extension}`
     const fullPath = path.join(CHAT_IMAGE_DIR, fileName)
 
     if (!fs.existsSync(fullPath)) {
@@ -192,9 +193,12 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 
   // 1. 立即记录用户消息
   const now = Date.now()
-  db.prepare(
-    'INSERT INTO chat_history (role, content, image_data, created_at) VALUES (?, ?, ?, ?)'
-  ).run('user', input, imagePath, now)
+  const userResult = db
+    .prepare(
+      'INSERT INTO chat_history (role, content, image_data, created_at) VALUES (?, ?, ?, ?)'
+    )
+    .run('user', input, imagePath, now)
+  const userMessageId = Number(userResult.lastInsertRowid)
 
   try {
     const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
@@ -422,13 +426,18 @@ ${customInstruction}
     }
 
     // Model message
-    db.prepare(
-      'INSERT INTO chat_history (role, content, usage, created_at) VALUES (?, ?, ?, ?)'
-    ).run('model', textResponse, JSON.stringify(totalUsage), Date.now())
+    const modelResult = db
+      .prepare(
+        'INSERT INTO chat_history (role, content, usage, created_at) VALUES (?, ?, ?, ?)'
+      )
+      .run('model', textResponse, JSON.stringify(totalUsage), Date.now())
 
     return {
       text: textResponse,
-      usage: totalUsage
+      usage: totalUsage,
+      userMessageId,
+      modelMessageId: Number(modelResult.lastInsertRowid),
+      imagePath
     }
   } catch (error) {
     console.error('AI Processing Error:', error)

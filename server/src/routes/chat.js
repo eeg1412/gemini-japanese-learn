@@ -38,7 +38,10 @@ router.post('/send', authenticateToken, async (req, res) => {
     )
     res.json({
       response: result.text,
-      usage: result.usage
+      usage: result.usage,
+      userMessageId: result.userMessageId,
+      modelMessageId: result.modelMessageId,
+      imagePath: result.imagePath
     })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -87,6 +90,22 @@ router.get('/image/:filename', authenticateToken, (req, res) => {
 router.delete('/:id', authenticateToken, (req, res) => {
   try {
     const { id } = req.params
+    // Get message to check if it has an image
+    const message = db
+      .prepare('SELECT image_data FROM chat_history WHERE id = ?')
+      .get(id)
+
+    if (message && message.image_data) {
+      const imagePath = path.join(
+        __dirname,
+        '../../chat/image',
+        message.image_data
+      )
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath)
+      }
+    }
+
     db.prepare('DELETE FROM chat_history WHERE id = ?').run(id)
     res.json({ success: true })
   } catch (error) {
