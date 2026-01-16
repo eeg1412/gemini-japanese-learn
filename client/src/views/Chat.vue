@@ -222,6 +222,24 @@ const resendMessage = text => {
   nextTick(() => autoResizeTextarea(inputEl.value))
 }
 
+const deleteMessage = async msg => {
+  if (!msg.id) {
+    // For newly sent messages not yet in DB or without ID
+    messages.value = messages.value.filter(m => m !== msg)
+    return
+  }
+  if (!confirm('确定要删除这条消息吗？')) return
+  try {
+    await axios.delete(`/api/chat/${msg.id}`, {
+      headers: { Authorization: `Bearer ${auth.token}` }
+    })
+    messages.value = messages.value.filter(m => m.id !== msg.id)
+  } catch (e) {
+    console.error('Delete error:', e)
+    alert('删除失败')
+  }
+}
+
 const sendMessage = async () => {
   if ((!input.value.trim() && !imageFile.value) || isLoading.value) return
 
@@ -426,6 +444,13 @@ watch(showConfig, newVal => {
                   title="重发按钮"
                 >
                   <span class="material-icons text-[14px]">refresh</span>
+                </button>
+                <button
+                  @click="deleteMessage(msg)"
+                  class="opacity-60 hover:opacity-100 transition-opacity flex items-center"
+                  title="删除消息"
+                >
+                  <span class="material-icons text-[14px]">delete_forever</span>
                 </button>
               </div>
               <div

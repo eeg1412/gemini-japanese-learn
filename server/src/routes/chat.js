@@ -6,6 +6,7 @@ import fs from 'fs'
 import jwt from 'jsonwebtoken'
 import { getSecret } from '../config/secret.js'
 import { fileURLToPath } from 'url'
+import db from '../db/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const router = express.Router()
@@ -73,6 +74,16 @@ router.get('/image/:filename', authenticateToken, (req, res) => {
     res.sendFile(filePath)
   } else {
     res.status(404).json({ error: 'Image not found' })
+  }
+})
+
+router.delete('/:id', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params
+    db.prepare('DELETE FROM chat_history WHERE id = ?').run(id)
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
 })
 

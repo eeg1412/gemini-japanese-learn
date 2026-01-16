@@ -25,6 +25,96 @@ const showCategoryDescription = category => {
   }
 }
 
+const CONJUGATION_INFO = {
+  辞书形: {
+    explanation:
+      '动词最基本、最原始的形态，也是词典中出现的形式。可表示一般事实、习惯、将来的动作，也是其他所有变形的基础。例如：食べる（吃）、行く（去）。'
+  },
+  ます形: {
+    explanation:
+      '表示礼貌、正式的说法，常用于日常交流、课堂、工作场合。说话对象通常是不太熟的人或需要尊敬的人。例如：食べます、行きます。'
+  },
+  ない形: {
+    explanation:
+      '否定形，表示“不做某事”或“没有发生”。常用于否定句、拒绝、打算不做某事等。例如：食べない（不吃）、行かない（不去）。'
+  },
+  た形: {
+    explanation:
+      '表示动作已经完成或事情已经发生，也可用于表达经验、回忆、条件等。例如：食べた（吃了）、行った（去了）。'
+  },
+  て形: {
+    explanation:
+      '非常重要且用途广泛的形态，用来连接动作、表示请求、原因、状态持续或先后顺序。例如：食べてください（请吃）、行ってから（去了之后）。'
+  },
+  ば形: {
+    explanation:
+      '假定条件形，表示“如果……就……”，多用于客观条件、规律性结果。例如：雨が降れば、行きません（如果下雨，就不去）。'
+  },
+  たら形: {
+    explanation:
+      '条件表达之一，表示“如果……之后……”，强调某件事情发生完成之后，再发生另一件事，常用于具体情况。例如：食べたら、寝ます（吃完就睡）。'
+  },
+  意志形: {
+    explanation:
+      '表示说话人的意愿、决定，或向对方提出建议，相当于“我打算……”“一起……吧”。例如：食べよう（吃吧）、行こう（走吧）。'
+  },
+  命令形: {
+    explanation:
+      '表示强烈命令或指示，语气直接甚至生硬，多用于上对下、紧急情况或男性口语中，日常需谨慎使用。例如：食べろ（吃！）、行け（去！）。'
+  },
+  禁止形: {
+    explanation:
+      '表示禁止做某事，相当于“不要……”。语气较强，常见于规则、警告或强烈制止的场合。例如：食べるな（别吃）、行くな（别去）。'
+  },
+  可能形: {
+    explanation:
+      '表示能力、可能性或许可，相当于“能……”“可以……”。例如：食べられる（能吃）、行ける（能去）。'
+  },
+  被动形: {
+    explanation:
+      '表示动作的承受者，常带有被影响、被动或不情愿的感觉。例如：先生に褒められた（被老师表扬了）。'
+  },
+  使役形: {
+    explanation:
+      '表示“让某人做某事”或“使某事发生”，常用于命令、许可、责任关系中。例如：子供に野菜を食べさせる（让孩子吃蔬菜）。'
+  },
+  使役被动形: {
+    explanation:
+      '表示“被迫去做某事”，通常带有无奈、不情愿的语气。例如：宿題をさせられた（被迫做作业）。'
+  },
+  推量形: {
+    explanation:
+      '表示推测、猜测或说话人的判断，相当于“大概……吧”“应该……”。例如：雨が降るだろう（大概会下雨）。'
+  },
+  未然形: {
+    explanation:
+      '一种语法上的基础形态，本身不能单独使用，主要用于接否定、推量、被动、使役等形式。例如：行か＋ない。'
+  },
+  连用形: {
+    explanation:
+      '用于连接其他助动词或句子的基础形态，是ます形、た形、て形等变化的基础。例如：食べ＋ます。'
+  },
+  终止形: {
+    explanation:
+      '用于结束句子的形态，现代日语中基本等同于辞书形，用于陈述事实或判断。例如：私はご飯を食べる。'
+  },
+  连体形: {
+    explanation:
+      '用于修饰名词的形态，现代日语中多与终止形相同。例如：食べる人（吃的人）。'
+  },
+  已然形: {
+    explanation:
+      '主要用于固定语法中，表示既成事实或因果关系，现代日语中多见于『〜ば』结构。例如：行けば分かる（去了就知道）。'
+  }
+}
+
+const showConjugationDescription = key => {
+  const info = CONJUGATION_INFO[key]
+  if (info) {
+    alert(`${key} 说明:\n${info.explanation}`)
+  }
+}
+
 const expandedConjugations = ref(new Set())
 const toggleConjugations = id => {
   if (expandedConjugations.value.has(id)) {
@@ -388,9 +478,12 @@ onMounted(() => {
                 class="flex flex-col border-b border-gray-100 dark:border-gray-800 pb-1"
               >
                 <span
-                  class="text-[12px] text-gray-400 dark:text-gray-400 uppercase tracking-tight"
-                  >{{ key }}</span
+                  @click.stop="showConjugationDescription(key)"
+                  class="text-[12px] text-gray-400 dark:text-gray-400 uppercase tracking-tight cursor-help hover:text-blue-500 transition-colors flex items-center gap-0.5"
                 >
+                  {{ key }}
+                  <span class="material-icons text-[12px]">info</span>
+                </span>
                 <span
                   class="text-xs sm:text-sm text-gray-700 dark:text-gray-200 font-medium break-all"
                   >{{ val || '-' }}</span
