@@ -99,25 +99,28 @@ const tools = [
                     description:
                       '仅限动词。必须完整提供19种形式。必须准确。禁止出错。',
                     properties: {
-                      masu: { type: 'STRING' },
-                      nai: { type: 'STRING' },
-                      ta: { type: 'STRING' },
-                      te: { type: 'STRING' },
-                      ba: { type: 'STRING' },
-                      tara: { type: 'STRING' },
-                      volitional: { type: 'STRING' },
-                      imperative: { type: 'STRING' },
-                      prohibitive: { type: 'STRING' },
-                      potential: { type: 'STRING' },
-                      passive: { type: 'STRING' },
-                      causative: { type: 'STRING' },
-                      causative_passive: { type: 'STRING' },
-                      conjecture: { type: 'STRING' },
-                      mizen: { type: 'STRING' },
-                      renyo: { type: 'STRING' },
-                      shushi: { type: 'STRING' },
-                      rentai: { type: 'STRING' },
-                      izen: { type: 'STRING' }
+                      masu: { type: 'STRING', description: 'ます形' },
+                      nai: { type: 'STRING', description: 'ない形' },
+                      ta: { type: 'STRING', description: 'た形' },
+                      te: { type: 'STRING', description: 'て形' },
+                      ba: { type: 'STRING', description: 'ば形' },
+                      tara: { type: 'STRING', description: 'たら形' },
+                      volitional: { type: 'STRING', description: '意志形' },
+                      imperative: { type: 'STRING', description: '命令形' },
+                      prohibitive: { type: 'STRING', description: '禁止形' },
+                      potential: { type: 'STRING', description: '可能形' },
+                      passive: { type: 'STRING', description: '被动形' },
+                      causative: { type: 'STRING', description: '使役形' },
+                      causative_passive: {
+                        type: 'STRING',
+                        description: '使役被动形'
+                      },
+                      conjecture: { type: 'STRING', description: '推量形' },
+                      mizen: { type: 'STRING', description: '未然形' },
+                      renyo: { type: 'STRING', description: '连用形' },
+                      shushi: { type: 'STRING', description: '终止形' },
+                      rentai: { type: 'STRING', description: '连体形' },
+                      izen: { type: 'STRING', description: '已然形' }
                     }
                   }
                 },
