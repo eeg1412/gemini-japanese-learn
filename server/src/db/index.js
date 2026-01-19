@@ -44,6 +44,14 @@ export function initDb() {
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT,
+      ip TEXT NOT NULL,
+      status TEXT CHECK(status IN ('success', 'failure')) NOT NULL,
+      created_at INTEGER NOT NULL
+    );
   `)
 
   // Lightweight migration for existing DBs
@@ -68,6 +76,13 @@ export function initDb() {
   if (!hasUsage) {
     db.exec('ALTER TABLE chat_history ADD COLUMN usage TEXT')
   }
+
+  const loginColumns = db.prepare('PRAGMA table_info(login_logs)').all()
+  const hasUsername = loginColumns.some(c => c.name === 'username')
+  if (!hasUsername) {
+    db.exec('ALTER TABLE login_logs ADD COLUMN username TEXT')
+  }
+
   console.log('Database initialized.')
 }
 

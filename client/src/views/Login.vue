@@ -9,12 +9,15 @@ const auth = useAuthStore()
 const error = ref('')
 
 const handleLogin = async () => {
-  const success = await auth.login(
+  error.value = ''
+  const result = await auth.login(
     username.value,
     password.value,
     rememberMe.value
   )
-  if (!success) error.value = '登录失败，请检查用户名和密码'
+  if (!result.success) {
+    error.value = result.error
+  }
 }
 </script>
 

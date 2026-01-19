@@ -17,10 +17,13 @@ export const useAuthStore = defineStore('auth', {
         this.token = res.data.accessToken
         localStorage.setItem('token', this.token)
         router.push('/')
-        return true
+        return { success: true }
       } catch (e) {
         console.error(e)
-        return false
+        return {
+          success: false,
+          error: e.response?.data?.message || '登录失败，请检查用户名和密码'
+        }
       }
     },
     logout() {
