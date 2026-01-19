@@ -202,6 +202,10 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 
   try {
     const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    const thinkingBudget =
+      process.env.GEMINI_THINKING_BUDGET !== undefined
+        ? parseInt(process.env.GEMINI_THINKING_BUDGET)
+        : 512
     const ai = getGenAI()
 
     // Load system prompt
@@ -216,7 +220,7 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 -解释文本中的语法点和词汇。
 -为所有汉字标注振假名，格式为：漢字(かんじ)。
 -将输入的日语翻译为简体中文。
--有错误时纠正用户的错误。
+-只有有错误时纠正用户的错误。
 -回复内容精炼，无重复，无多余内容，绝对的权威，使用最少的token用中文进行解释。
 -使用工具函数 \`save_learning_content\` 一次性保存文本中所有出现的关键生词和语法点。
 `.trim()
@@ -236,7 +240,6 @@ ${customInstruction}
 `.trim()
 
     const parts = []
-    parts.push({ text: fullInstruction })
 
     if (base64Data) {
       parts.push({
@@ -251,7 +254,14 @@ ${customInstruction}
 
     const chat = ai.chats.create({
       model: modelName,
-      config: { tools: tools },
+      config: {
+        tools: tools,
+        systemInstruction: fullInstruction,
+        thinkingConfig: {
+          includeThoughts: false,
+          thinkingBudget: thinkingBudget
+        }
+      },
       history: []
     })
 
