@@ -59,7 +59,7 @@ const formatDateInput = date => {
 // Time Helpers
 const setRange = type => {
   dateRangeType.value = type
-  
+
   if (type === 'all') {
     customStart.value = ''
     customEnd.value = ''
@@ -95,8 +95,12 @@ const setRange = type => {
 
 const triggerQuery = () => {
   // 如果输入框为空，则视为查询全部
-  const start = customStart.value ? new Date(customStart.value).setHours(0, 0, 0, 0) : 0
-  const end = customEnd.value ? new Date(customEnd.value).setHours(23, 59, 59, 999) : Date.now() + 86400000
+  const start = customStart.value
+    ? new Date(customStart.value).setHours(0, 0, 0, 0)
+    : 0
+  const end = customEnd.value
+    ? new Date(customEnd.value).setHours(23, 59, 59, 999)
+    : Date.now() + 86400000
   fetchStats(start, end)
 }
 
@@ -235,136 +239,146 @@ onMounted(() => {
               v-if="loadingStats"
               class="absolute inset-0 z-10 bg-white/60 dark:bg-gray-800/60 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-xl"
             >
-              <span class="material-icons animate-spin text-3xl mb-3 text-blue-600 dark:text-blue-400">refresh</span>
-              <span class="text-sm font-medium text-gray-600 dark:text-gray-300">正在汇总统计数据...</span>
+              <span
+                class="material-icons animate-spin text-3xl mb-3 text-blue-600 dark:text-blue-400"
+                >refresh</span
+              >
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-300"
+                >正在汇总统计数据...</span
+              >
             </div>
           </Transition>
 
-          <div :class="['grid grid-cols-1 gap-6 transition-opacity duration-500', loadingStats ? 'opacity-40 delay-1000' : 'opacity-100']">
+          <div
+            :class="[
+              'grid grid-cols-1 gap-6 transition-opacity duration-500',
+              loadingStats ? 'opacity-40 delay-1000' : 'opacity-100'
+            ]"
+          >
             <!-- 主指标：总消耗 -->
             <div
               class="lg:col-span-1 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30 flex flex-col justify-center text-center"
             >
-            <div
-              class="text-sm text-blue-600/70 dark:text-blue-400/70 mb-1 font-bold"
-            >
-              总计 (Total):
+              <div
+                class="text-sm text-blue-600/70 dark:text-blue-400/70 mb-1 font-bold"
+              >
+                总计 (Total):
+              </div>
+              <div
+                class="text-4xl sm:text-5xl font-black text-blue-700 dark:text-blue-300 tracking-tighter mb-4"
+              >
+                {{ stats.totalTokens?.toLocaleString() }}
+              </div>
+              <div
+                class="flex items-center justify-center gap-4 text-xs font-medium text-blue-600/60 dark:text-blue-400/60"
+              >
+                <span class="flex items-center gap-1">
+                  <span class="material-icons text-[14px]">bolt</span>
+                  {{ stats.count }} 次请求
+                </span>
+              </div>
             </div>
-            <div
-              class="text-4xl sm:text-5xl font-black text-blue-700 dark:text-blue-300 tracking-tighter mb-4"
-            >
-              {{ stats.totalTokens?.toLocaleString() }}
-            </div>
-            <div
-              class="flex items-center justify-center gap-4 text-xs font-medium text-blue-600/60 dark:text-blue-400/60"
-            >
-              <span class="flex items-center gap-1">
-                <span class="material-icons text-[14px]">bolt</span>
-                {{ stats.count }} 次请求
-              </span>
-            </div>
-          </div>
 
-          <!-- 次要指标：详细分类 (对齐 Chat.vue 逻辑) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              class="space-y-3 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700"
-            >
-              <!-- 输入 -->
-              <div class="flex flex-col">
-                <div class="flex justify-between items-center mb-1">
+            <!-- 次要指标：详细分类 (对齐 Chat.vue 逻辑) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div
+                class="space-y-3 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700"
+              >
+                <!-- 输入 -->
+                <div class="flex flex-col">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm text-gray-600 dark:text-gray-400"
+                      >输入 (Prompt):</span
+                    >
+                    <span
+                      class="font-mono font-bold text-blue-600 dark:text-blue-400"
+                      >{{ stats.promptTokens?.toLocaleString() }}</span
+                    >
+                  </div>
+                  <div
+                    v-for="det in stats.promptDetails"
+                    :key="det.modality"
+                    class="flex justify-between text-[11px] text-gray-400 pl-3"
+                  >
+                    <span>└ {{ det.modality }}:</span>
+                    <span class="font-mono">{{
+                      det.tokenCount?.toLocaleString()
+                    }}</span>
+                  </div>
+                </div>
+
+                <!-- 输出 -->
+                <div
+                  class="flex flex-col pt-2 border-t border-gray-200 dark:border-gray-700"
+                >
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm text-gray-600 dark:text-gray-400"
+                      >输出 (Response):</span
+                    >
+                    <span
+                      class="font-mono font-bold text-green-600 dark:text-green-400"
+                      >{{ stats.candidatesTokens?.toLocaleString() }}</span
+                    >
+                  </div>
+                  <div
+                    v-for="det in stats.candidatesDetails"
+                    :key="det.modality"
+                    class="flex justify-between text-[11px] text-gray-400 pl-3"
+                  >
+                    <span>└ {{ det.modality }}:</span>
+                    <span class="font-mono">{{
+                      det.tokenCount?.toLocaleString()
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="space-y-3 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700"
+              >
+                <!-- 思考 -->
+                <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600 dark:text-gray-400"
-                    >输入 (Prompt):</span
+                    >思考 (Thinking):</span
                   >
                   <span
-                    class="font-mono font-bold text-blue-600 dark:text-blue-400"
-                    >{{ stats.promptTokens?.toLocaleString() }}</span
+                    class="font-mono font-bold text-amber-600 dark:text-amber-400"
+                    >{{ stats.thoughtsTokens?.toLocaleString() }}</span
                   >
                 </div>
-                <div
-                  v-for="det in stats.promptDetails"
-                  :key="det.modality"
-                  class="flex justify-between text-[11px] text-gray-400 pl-3"
-                >
-                  <span>└ {{ det.modality }}:</span>
-                  <span class="font-mono">{{
-                    det.tokenCount?.toLocaleString()
-                  }}</span>
-                </div>
-              </div>
 
-              <!-- 输出 -->
-              <div
-                class="flex flex-col pt-2 border-t border-gray-200 dark:border-gray-700"
-              >
-                <div class="flex justify-between items-center mb-1">
+                <!-- 缓存 -->
+                <div
+                  class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700"
+                >
                   <span class="text-sm text-gray-600 dark:text-gray-400"
-                    >输出 (Response):</span
+                    >缓存 (Cached):</span
                   >
                   <span
-                    class="font-mono font-bold text-green-600 dark:text-green-400"
-                    >{{ stats.candidatesTokens?.toLocaleString() }}</span
+                    class="font-mono font-bold text-cyan-600 dark:text-cyan-400"
+                    >{{ stats.cachedTokens?.toLocaleString() }}</span
                   >
                 </div>
+
+                <!-- 工具 -->
                 <div
-                  v-for="det in stats.candidatesDetails"
-                  :key="det.modality"
-                  class="flex justify-between text-[11px] text-gray-400 pl-3"
+                  class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700"
                 >
-                  <span>└ {{ det.modality }}:</span>
-                  <span class="font-mono">{{
-                    det.tokenCount?.toLocaleString()
-                  }}</span>
+                  <span class="text-sm text-gray-600 dark:text-gray-400"
+                    >工具提示 (Tool Prompt):</span
+                  >
+                  <span
+                    class="font-mono font-bold text-purple-600 dark:text-purple-400"
+                    >{{ stats.toolPromptTokens?.toLocaleString() }}</span
+                  >
                 </div>
-              </div>
-            </div>
-
-            <div
-              class="space-y-3 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700"
-            >
-              <!-- 思考 -->
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-400"
-                  >思考 (Thinking):</span
-                >
-                <span
-                  class="font-mono font-bold text-amber-600 dark:text-amber-400"
-                  >{{ stats.thoughtsTokens?.toLocaleString() }}</span
-                >
-              </div>
-
-              <!-- 缓存 -->
-              <div
-                class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700"
-              >
-                <span class="text-sm text-gray-600 dark:text-gray-400"
-                  >缓存 (Cached):</span
-                >
-                <span
-                  class="font-mono font-bold text-cyan-600 dark:text-cyan-400"
-                  >{{ stats.cachedTokens?.toLocaleString() }}</span
-                >
-              </div>
-
-              <!-- 工具 -->
-              <div
-                class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700"
-              >
-                <span class="text-sm text-gray-600 dark:text-gray-400"
-                  >工具提示 (Tool Prompt):</span
-                >
-                <span
-                  class="font-mono font-bold text-purple-600 dark:text-purple-400"
-                  >{{ stats.toolPromptTokens?.toLocaleString() }}</span
-                >
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Login Logs Card -->
+      <!-- Login Logs Card -->
       <div
         class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4"
       >
@@ -393,12 +407,22 @@ onMounted(() => {
               v-if="loadingLogs"
               class="absolute inset-0 z-10 bg-white/60 dark:bg-gray-800/60 backdrop-blur-[1px] flex flex-col items-center justify-center"
             >
-              <span class="material-icons animate-spin text-3xl mb-3 text-blue-600 dark:text-blue-400">refresh</span>
-              <span class="text-sm font-medium text-gray-600 dark:text-gray-300">正在获取日志...</span>
+              <span
+                class="material-icons animate-spin text-3xl mb-3 text-blue-600 dark:text-blue-400"
+                >refresh</span
+              >
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-300"
+                >正在获取日志...</span
+              >
             </div>
           </Transition>
 
-          <div :class="['transition-opacity duration-500', loadingLogs ? 'opacity-40 delay-1000' : 'opacity-100']">
+          <div
+            :class="[
+              'transition-opacity duration-500',
+              loadingLogs ? 'opacity-40 delay-1000' : 'opacity-100'
+            ]"
+          >
             <table
               class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
             >
@@ -447,7 +471,7 @@ onMounted(() => {
                     </span>
                   </td>
                   <td
-                    class="px-4 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 italic"
+                    class="px-4 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100"
                   >
                     {{ log.username || '---' }}
                   </td>
