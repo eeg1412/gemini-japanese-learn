@@ -32,6 +32,8 @@ router.get('/stats/token', (req, res) => {
     // Detailed modalities
     const promptDetails = {}
     const candidatesDetails = {}
+    const cacheDetails = {}
+    const toolUseDetails = {}
 
     rows.forEach(row => {
       if (row.usage) {
@@ -61,6 +63,18 @@ router.get('/stats/token', (req, res) => {
                 (candidatesDetails[d.modality] || 0) + d.tokenCount
             })
           }
+          if (usage.cacheTokensDetails) {
+            usage.cacheTokensDetails.forEach(d => {
+              cacheDetails[d.modality] =
+                (cacheDetails[d.modality] || 0) + d.tokenCount
+            })
+          }
+          if (usage.toolUsePromptTokensDetails) {
+            usage.toolUsePromptTokensDetails.forEach(d => {
+              toolUseDetails[d.modality] =
+                (toolUseDetails[d.modality] || 0) + d.tokenCount
+            })
+          }
         } catch (e) {
           // Ignore parse errors for legacy data
         }
@@ -78,6 +92,12 @@ router.get('/stats/token', (req, res) => {
         ([modality, tokenCount]) => ({ modality, tokenCount })
       ),
       candidatesDetails: Object.entries(candidatesDetails).map(
+        ([modality, tokenCount]) => ({ modality, tokenCount })
+      ),
+      cacheDetails: Object.entries(cacheDetails).map(
+        ([modality, tokenCount]) => ({ modality, tokenCount })
+      ),
+      toolUseDetails: Object.entries(toolUseDetails).map(
         ([modality, tokenCount]) => ({ modality, tokenCount })
       ),
       count: rows.length

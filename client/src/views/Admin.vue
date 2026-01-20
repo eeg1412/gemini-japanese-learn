@@ -18,6 +18,8 @@ const stats = ref({
   toolPromptTokens: 0,
   promptDetails: [],
   candidatesDetails: [],
+  cacheDetails: [],
+  toolUseDetails: [],
   count: 0
 })
 const logs = ref([])
@@ -121,6 +123,8 @@ const fetchStats = async (start, end) => {
       toolPromptTokens: res.data.toolPromptTokens || 0,
       promptDetails: res.data.promptDetails || [],
       candidatesDetails: res.data.candidatesDetails || [],
+      cacheDetails: res.data.cacheDetails || [],
+      toolUseDetails: res.data.toolUseDetails || [],
       count: res.data.count || 0
     }
   } catch (e) {
@@ -349,28 +353,53 @@ onMounted(() => {
 
                 <!-- 缓存 -->
                 <div
-                  class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700"
+                  class="flex flex-col pt-2 border-t border-gray-200 dark:border-gray-700"
                 >
-                  <span class="text-sm text-gray-600 dark:text-gray-400"
-                    >缓存 (Cached):</span
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm text-gray-600 dark:text-gray-400"
+                      >缓存 (Cached):</span
+                    >
+                    <span
+                      class="font-mono font-bold text-cyan-600 dark:text-cyan-400"
+                      >{{ stats.cachedTokens?.toLocaleString() }}</span
+                    >
+                  </div>
+                  <div
+                    v-for="det in stats.cacheDetails"
+                    :key="det.modality"
+                    class="flex justify-between text-[11px] text-gray-400 pl-3"
                   >
-                  <span
-                    class="font-mono font-bold text-cyan-600 dark:text-cyan-400"
-                    >{{ stats.cachedTokens?.toLocaleString() }}</span
-                  >
+                    <span>└ {{ det.modality }}:</span>
+                    <span class="font-mono">{{
+                      det.tokenCount?.toLocaleString()
+                    }}</span>
+                  </div>
                 </div>
 
                 <!-- 工具 -->
                 <div
-                  class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700"
+                  class="flex flex-col pt-2 border-t border-gray-200 dark:border-gray-700"
+                  v-if="stats.toolPromptTokens"
                 >
-                  <span class="text-sm text-gray-600 dark:text-gray-400"
-                    >工具提示 (Tool Prompt):</span
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm text-gray-600 dark:text-gray-400"
+                      >工具提示 (Tool Prompt):</span
+                    >
+                    <span
+                      class="font-mono font-bold text-purple-600 dark:text-purple-400"
+                      >{{ stats.toolPromptTokens?.toLocaleString() }}</span
+                    >
+                  </div>
+                  <div
+                    v-for="det in stats.toolUseDetails"
+                    :key="det.modality"
+                    class="flex justify-between text-[11px] text-gray-400 pl-3"
                   >
-                  <span
-                    class="font-mono font-bold text-purple-600 dark:text-purple-400"
-                    >{{ stats.toolPromptTokens?.toLocaleString() }}</span
-                  >
+                    <span>└ {{ det.modality }}:</span>
+                    <span class="font-mono">{{
+                      det.tokenCount?.toLocaleString()
+                    }}</span>
+                  </div>
                 </div>
               </div>
             </div>
