@@ -240,9 +240,17 @@ const toggleStar = async word => {
     )
     const updated = res.data?.data
     const idx = vocabList.value.findIndex(v => v.id === word.id)
-    if (idx >= 0 && updated) {
-      vocabList.value[idx] = updated
-      sortLocal()
+    if (idx >= 0) {
+      // 判断 filterMode 是否需要移除该项
+      if (
+        (filterMode.value === 'starred' && !updated.starred) ||
+        (filterMode.value === 'unstarred' && updated.starred)
+      ) {
+        vocabList.value.splice(idx, 1)
+      } else if (updated) {
+        vocabList.value[idx] = updated
+        sortLocal()
+      }
     }
   } catch (e) {
     console.error('Star error:', e)
