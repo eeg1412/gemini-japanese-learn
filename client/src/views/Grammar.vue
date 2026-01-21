@@ -138,6 +138,7 @@ const toggleStar = async item => {
         (filterMode.value === 'unstarred' && updated.starred)
       ) {
         grammarList.value.splice(idx, 1)
+        totalCount.value--
       } else if (updated) {
         grammarList.value[idx] = updated
         sortLocal()
@@ -160,6 +161,7 @@ const toggleLearned = async item => {
     const idx = grammarList.value.findIndex(v => v.id === item.id)
     if (idx >= 0) {
       grammarList.value.splice(idx, 1)
+      totalCount.value--
       // sortLocal()
     }
   } catch (e) {
@@ -176,6 +178,7 @@ const deleteGrammar = async id => {
       headers: { Authorization: `Bearer ${auth.token}` }
     })
     grammarList.value = grammarList.value.filter(item => item.id !== id)
+    totalCount.value--
   } catch (e) {
     console.error('Delete error:', e)
     alert('删除失败')

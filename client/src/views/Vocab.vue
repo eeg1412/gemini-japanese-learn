@@ -252,6 +252,7 @@ const toggleStar = async word => {
         (filterMode.value === 'unstarred' && updated.starred)
       ) {
         vocabList.value.splice(idx, 1)
+        totalCount.value--
       } else if (updated) {
         vocabList.value[idx] = updated
         sortLocal()
@@ -274,6 +275,7 @@ const toggleLearned = async word => {
     const idx = vocabList.value.findIndex(v => v.id === word.id)
     if (idx >= 0) {
       vocabList.value.splice(idx, 1)
+      totalCount.value--
       // sortLocal()
     }
   } catch (e) {
@@ -290,6 +292,7 @@ const deleteVocab = async id => {
       headers: { Authorization: `Bearer ${auth.token}` }
     })
     vocabList.value = vocabList.value.filter(item => item.id !== id)
+    totalCount.value--
   } catch (e) {
     console.error('Delete error:', e)
     alert('删除失败')
