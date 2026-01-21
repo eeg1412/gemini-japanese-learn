@@ -333,7 +333,7 @@ onMounted(() => {
           <!-- Example (Unified) -->
           <div
             v-if="item.example"
-            class="group text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex items-center gap-1"
+            class="group text-xs sm:text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex items-center gap-1"
           >
             <span>例句: {{ item.example }}</span>
             <button
