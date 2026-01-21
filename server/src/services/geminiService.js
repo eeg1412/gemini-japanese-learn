@@ -242,7 +242,7 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 返回的计划应包含：
 -仅针对收藏内容。
 -学习现状分析。
--词汇和语法的讲解。
+-词汇和语法的讲解和例句分析。
 -高效快速的阶段性学习方案。
 -根据词汇和语法数量制定目标时间。
 -为所有汉字标注振假名，格式为：漢字(かんじ)。
