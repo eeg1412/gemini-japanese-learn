@@ -376,7 +376,7 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
             ]"
           >
-            <span class="material-icons text-sm">list</span>
+            <span class="material-icons text-sm">menu_book</span>
             <span class="hidden sm:inline">生词</span>
           </button>
           <button

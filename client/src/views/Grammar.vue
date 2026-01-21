@@ -262,8 +262,8 @@ onMounted(() => {
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
             ]"
           >
-            <span class="material-icons text-sm">list</span>
-            <span class="hidden sm:inline">语法</span>
+            <span class="material-icons text-sm">school</span>
+            <span class="hidden sm:inline">语法难点</span>
           </button>
           <button
             @click="changeFilter('starred')"
@@ -275,7 +275,7 @@ onMounted(() => {
             ]"
           >
             <span class="material-icons text-sm text-yellow-400">star</span>
-            <span class="hidden sm:inline">已收藏语法</span>
+            <span class="hidden sm:inline">已收藏语法难点</span>
           </button>
           <button
             @click="changeFilter('unstarred')"
@@ -287,7 +287,7 @@ onMounted(() => {
             ]"
           >
             <span class="material-icons text-sm">star_border</span>
-            <span class="hidden sm:inline">未收藏语法</span>
+            <span class="hidden sm:inline">未收藏语法难点</span>
           </button>
           <button
             @click="changeFilter('learned')"
