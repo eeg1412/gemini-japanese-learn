@@ -50,7 +50,7 @@ const CONJUGATION_MAP = {
   izen: '已然形'
 }
 
-const tools = [
+const saveTools = [
   {
     functionDeclarations: [
       {
@@ -163,6 +163,21 @@ const tools = [
   }
 ]
 
+const planTools = [
+  {
+    functionDeclarations: [
+      {
+        name: 'get_starred_items',
+        description: '返回用户所有已收藏的生词和语法点。',
+        parameters: {
+          type: 'OBJECT',
+          properties: {}
+        }
+      }
+    ]
+  }
+]
+
 export async function processChat(input, imageBase64, customInstruction = '') {
   let imagePath = null
   let mimeType = 'image/jpeg'
@@ -213,8 +228,29 @@ export async function processChat(input, imageBase64, customInstruction = '') {
       ? path.resolve(__dirname, '../../', process.env.USER_PROMPT_PATH)
       : path.join(__dirname, '../../user_prompt.txt')
 
+    const isPlanRequest = input.trim() === '为我制定一份详细的学习计划'
+
     // 默认系统提示词
-    let defaultSystemPrompt = `
+    let defaultSystemPrompt = ''
+    let activeTools = []
+
+    if (isPlanRequest) {
+      defaultSystemPrompt = `
+你是一个专业的日语教育专家。
+你的任务是根据用户提供的已收藏生词和语法点，分析其学习进度，并制定一份科学、详细且可执行的学习计划。
+你必须调用工具 \`get_starred_items\` 来获取用户收藏的内容。
+返回的计划应包含：
+-仅针对收藏内容。
+-学习现状分析。
+-词汇和语法的讲解。
+-高效快速的阶段性学习方案。
+-根据词汇和语法数量制定目标时间。
+-为所有汉字标注振假名，格式为：漢字(かんじ)。
+-回复内容精炼，无重复，无多余内容，绝对的权威，使用最少的token用中文进行解释。
+`.trim()
+      activeTools = planTools
+    } else {
+      defaultSystemPrompt = `
 你的任务是帮助用户学习日语。
 当你收到用户的日语文本或图片时，请执行以下操作：
 -解释文本中的语法点和词汇。
@@ -224,6 +260,8 @@ export async function processChat(input, imageBase64, customInstruction = '') {
 -回复内容精炼，无重复，无多余内容，绝对的权威，使用最少的token用中文进行解释。
 -使用工具函数 \`save_learning_content\` 一次性保存文本中所有出现的关键生词和语法点。
 `.trim()
+      activeTools = saveTools
+    }
 
     let userPromptOverride = ''
     if (fs.existsSync(promptPath)) {
@@ -255,7 +293,7 @@ ${customInstruction}
     const chat = ai.chats.create({
       model: modelName,
       config: {
-        tools: tools,
+        tools: activeTools,
         systemInstruction: fullInstruction,
         thinkingConfig: {
           includeThoughts: false,
@@ -363,6 +401,26 @@ ${customInstruction}
               name: 'save_learning_content',
               response: {
                 result: '所提供生词语法点已全部录入。'
+              },
+              id: call.id
+            }
+          })
+        } else if (call.name === 'get_starred_items') {
+          console.log('Calling tool get_starred_items')
+
+          const starredVocabs = db
+            .prepare('SELECT original FROM vocabularies WHERE starred = 1')
+            .all()
+          const starredGrammars = db
+            .prepare('SELECT grammar FROM grammars WHERE starred = 1')
+            .all()
+
+          functionResponses.push({
+            functionResponse: {
+              name: 'get_starred_items',
+              response: {
+                vocabularies: starredVocabs.map(v => v.original),
+                grammars: starredGrammars.map(g => g.grammar)
               },
               id: call.id
             }

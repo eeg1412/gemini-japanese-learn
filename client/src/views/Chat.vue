@@ -236,6 +236,12 @@ const resendMessage = text => {
   nextTick(() => autoResizeTextarea(inputEl.value))
 }
 
+const generateStudyPlan = () => {
+  if (isLoading.value) return
+  input.value = '为我制定一份详细的学习计划'
+  sendMessage()
+}
+
 const deleteMessage = async msg => {
   if (!msg.id) {
     // For newly sent messages not yet in DB or without ID
@@ -650,14 +656,25 @@ watch(showConfig, newVal => {
 
     <!-- Controls -->
     <div class="p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-      <!-- Config Toggle -->
-      <button
-        @click="showConfig = !showConfig"
-        class="flex items-center gap-1 text-xs text-gray-500 mb-2 hover:underline"
-      >
-        <span class="material-icons text-xs">settings</span>
-        {{ showConfig ? '隐藏设置' : '显示设置' }}
-      </button>
+      <!-- Config Toggle & Study Plan Button -->
+      <div class="flex items-center justify-between mb-2">
+        <button
+          @click="showConfig = !showConfig"
+          class="flex items-center gap-1 text-xs text-gray-500"
+        >
+          <span class="material-icons text-xs">settings</span>
+          <span>{{ showConfig ? '隐藏设置' : '显示设置' }}</span>
+        </button>
+
+        <button
+          @click="generateStudyPlan"
+          :disabled="isLoading"
+          class="flex items-center gap-1 text-xs bg-blue-600 text-white px-1.5 py-1 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+        >
+          <span class="material-icons text-xs">event_note</span>
+          制定学习计划
+        </button>
+      </div>
 
       <div
         v-if="showConfig"
@@ -736,7 +753,9 @@ watch(showConfig, newVal => {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-enter-from,
