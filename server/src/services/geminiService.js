@@ -136,7 +136,7 @@ const tools = [
                   grammar: {
                     type: 'STRING',
                     description:
-                      '语法点名称或句型（如：～てはいけない）。这是语法库中的唯一标识。'
+                      '语法点名称或句型，接～（如：～てはいけない）。这是语法库中的唯一标识。'
                   },
                   explanation: {
                     type: 'STRING',
