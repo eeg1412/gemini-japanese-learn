@@ -409,10 +409,14 @@ ${customInstruction}
           console.log('Calling tool get_starred_items')
 
           const starredVocabs = db
-            .prepare('SELECT original FROM vocabularies WHERE starred = 1')
+            .prepare(
+              'SELECT original FROM vocabularies WHERE starred = 1 AND learned = 0'
+            )
             .all()
           const starredGrammars = db
-            .prepare('SELECT grammar FROM grammars WHERE starred = 1')
+            .prepare(
+              'SELECT grammar FROM grammars WHERE starred = 1 AND learned = 0'
+            )
             .all()
 
           functionResponses.push({

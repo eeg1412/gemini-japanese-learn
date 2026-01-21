@@ -126,7 +126,7 @@ const toggleConjugations = id => {
 }
 
 const container = ref(null)
-const filterMode = ref('all') // all | starred | unstarred
+const filterMode = ref('all') // all | starred | unstarred | learned
 
 const sortLocal = () => {
   const order = sortOrder.value === 'asc' ? 1 : -1
@@ -134,6 +134,11 @@ const sortLocal = () => {
     const aStar = Number(a.starred || 0)
     const bStar = Number(b.starred || 0)
     if (aStar !== bStar) return bStar - aStar // starred first
+
+    const aLearned = Number(a.learned || 0)
+    const bLearned = Number(b.learned || 0)
+    if (aLearned !== bLearned) return aLearned - bLearned // unlearned first
+
     return (Number(a.updated_at) - Number(b.updated_at)) * order
   })
 }
@@ -258,6 +263,25 @@ const toggleStar = async word => {
   }
 }
 
+const toggleLearned = async word => {
+  try {
+    const res = await axios.patch(
+      `/api/vocab/${word.id}/learned`,
+      {},
+      { headers: { Authorization: `Bearer ${auth.token}` } }
+    )
+    const updated = res.data?.data
+    const idx = vocabList.value.findIndex(v => v.id === word.id)
+    if (idx >= 0) {
+      vocabList.value.splice(idx, 1)
+      // sortLocal()
+    }
+  } catch (e) {
+    console.error('Learned toggle error:', e)
+    alert('操作失败')
+  }
+}
+
 const deleteVocab = async id => {
   if (!confirm('确定要从生词本中删除该单词吗？')) return
 
@@ -350,7 +374,7 @@ onMounted(() => {
             ]"
           >
             <span class="material-icons text-sm">list</span>
-            <span class="hidden sm:inline">全部</span>
+            <span class="hidden sm:inline">生词</span>
           </button>
           <button
             @click="changeFilter('starred')"
@@ -362,7 +386,7 @@ onMounted(() => {
             ]"
           >
             <span class="material-icons text-sm text-yellow-400">star</span>
-            <span class="hidden sm:inline">已收藏</span>
+            <span class="hidden sm:inline">已收藏生词</span>
           </button>
           <button
             @click="changeFilter('unstarred')"
@@ -374,7 +398,21 @@ onMounted(() => {
             ]"
           >
             <span class="material-icons text-sm">star_border</span>
-            <span class="hidden sm:inline">未收藏</span>
+            <span class="hidden sm:inline">未收藏生词</span>
+          </button>
+          <button
+            @click="changeFilter('learned')"
+            :class="[
+              'p-1 sm:p-1.5 rounded border font-medium flex items-center gap-1 text-xs sm:text-sm',
+              filterMode === 'learned'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+            ]"
+          >
+            <span class="material-icons text-sm text-green-500"
+              >check_circle</span
+            >
+            <span class="hidden sm:inline">已学会</span>
           </button>
         </div>
       </div>
@@ -426,6 +464,18 @@ onMounted(() => {
               title="朗读"
             >
               <span class="material-icons text-base">volume_up</span>
+            </button>
+            <button
+              @click.stop="toggleLearned(word)"
+              :class="[
+                'p-1 sm:p-1.5 transition-colors rounded hover:bg-green-50 dark:hover:bg-green-900/20',
+                word.learned
+                  ? 'text-green-500 dark:text-green-400'
+                  : 'text-gray-400 hover:text-green-500 dark:text-gray-500 dark:hover:text-green-400'
+              ]"
+              :title="word.learned ? '设为未学会' : '设为已学会'"
+            >
+              <span class="material-icons text-base">check_circle</span>
             </button>
             <button
               @click.stop="toggleStar(word)"

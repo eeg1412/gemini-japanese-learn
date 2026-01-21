@@ -51,10 +51,22 @@ export const upsertGrammar = ({ grammar, explanation, structure, example }) => {
       structure,
       example,
       starred: 0,
+      learned: 0,
       created_at: now,
       updated_at: now
     }
   }
+}
+
+export const toggleLearned = id => {
+  const item = db.prepare('SELECT learned FROM grammars WHERE id = ?').get(id)
+  if (!item) return null
+
+  const newValue = item.learned ? 0 : 1
+  db.prepare(
+    'UPDATE grammars SET learned = ?, updated_at = ? WHERE id = ?'
+  ).run(newValue, Date.now(), id)
+  return { id, learned: newValue }
 }
 
 export const getGrammars = ({
@@ -68,11 +80,13 @@ export const getGrammars = ({
     explicitOffset !== null ? Number(explicitOffset) : (page - 1) * limit
   const order = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
-  let whereClause = ''
+  let whereClause = 'WHERE learned = 0'
   if (filter === 'starred') {
-    whereClause = 'WHERE starred = 1'
+    whereClause = 'WHERE starred = 1 AND learned = 0'
   } else if (filter === 'unstarred') {
-    whereClause = 'WHERE starred = 0'
+    whereClause = 'WHERE starred = 0 AND learned = 0'
+  } else if (filter === 'learned') {
+    whereClause = 'WHERE learned = 1'
   }
 
   const rows = db
@@ -80,7 +94,7 @@ export const getGrammars = ({
       `
     SELECT * FROM grammars
     ${whereClause}
-    ORDER BY starred DESC, updated_at ${order}
+    ORDER BY starred DESC, learned ASC, updated_at ${order}
     LIMIT ? OFFSET ?
   `
     )

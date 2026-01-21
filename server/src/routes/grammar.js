@@ -2,7 +2,8 @@ import express from 'express'
 import {
   getGrammars,
   deleteGrammar,
-  toggleStarGrammar
+  toggleStarGrammar,
+  toggleLearned
 } from '../services/grammarService.js'
 import { authenticateToken } from '../middleware/auth.js'
 
@@ -37,6 +38,20 @@ router.patch('/:id/star', authenticateToken, (req, res) => {
     res.json({ data: updated })
   } catch (error) {
     console.error('Star grammar error:', error)
+    res.status(500).json({ error: 'Failed to update grammar' })
+  }
+})
+
+router.patch('/:id/learned', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params
+    const updated = toggleLearned(id)
+    if (!updated) {
+      return res.status(404).json({ error: 'Grammar not found' })
+    }
+    res.json({ data: updated })
+  } catch (error) {
+    console.error('Toggle learned error:', error)
     res.status(500).json({ error: 'Failed to update grammar' })
   }
 })

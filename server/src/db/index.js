@@ -20,6 +20,7 @@ export function initDb() {
       verb_category TEXT,
       conjugations TEXT,
       starred INTEGER NOT NULL DEFAULT 0,
+      learned INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -41,6 +42,7 @@ export function initDb() {
       level TEXT,
       example TEXT,
       starred INTEGER NOT NULL DEFAULT 0,
+      learned INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -62,6 +64,12 @@ export function initDb() {
       'ALTER TABLE vocabularies ADD COLUMN starred INTEGER NOT NULL DEFAULT 0'
     )
   }
+  const hasLearnedVocab = vocabColumns.some(c => c.name === 'learned')
+  if (!hasLearnedVocab) {
+    db.exec(
+      'ALTER TABLE vocabularies ADD COLUMN learned INTEGER NOT NULL DEFAULT 0'
+    )
+  }
   const hasVerbCategory = vocabColumns.some(c => c.name === 'verb_category')
   if (!hasVerbCategory) {
     db.exec('ALTER TABLE vocabularies ADD COLUMN verb_category TEXT')
@@ -81,6 +89,14 @@ export function initDb() {
   const hasUsername = loginColumns.some(c => c.name === 'username')
   if (!hasUsername) {
     db.exec('ALTER TABLE login_logs ADD COLUMN username TEXT')
+  }
+
+  const grammarColumns = db.prepare('PRAGMA table_info(grammars)').all()
+  const hasLearnedGrammar = grammarColumns.some(c => c.name === 'learned')
+  if (!hasLearnedGrammar) {
+    db.exec(
+      'ALTER TABLE grammars ADD COLUMN learned INTEGER NOT NULL DEFAULT 0'
+    )
   }
 
   console.log('Database initialized.')

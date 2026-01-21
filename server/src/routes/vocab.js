@@ -3,7 +3,8 @@ import {
   getVocabularies,
   deleteVocabulary,
   setVocabularyStarred,
-  toggleVocabularyStarred
+  toggleVocabularyStarred,
+  toggleLearned
 } from '../services/vocabService.js'
 import { authenticateToken } from '../middleware/auth.js'
 
@@ -51,6 +52,20 @@ router.patch('/:id/star', authenticateToken, (req, res) => {
     res.json({ data: updated })
   } catch (error) {
     console.error('Star vocab error:', error)
+    res.status(500).json({ error: 'Failed to update vocabulary' })
+  }
+})
+
+router.patch('/:id/learned', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params
+    const updated = toggleLearned(id)
+    if (!updated) {
+      return res.status(404).json({ error: 'Vocabulary not found' })
+    }
+    res.json({ data: updated })
+  } catch (error) {
+    console.error('Toggle learned error:', error)
     res.status(500).json({ error: 'Failed to update vocabulary' })
   }
 })
