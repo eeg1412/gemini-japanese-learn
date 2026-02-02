@@ -290,16 +290,25 @@ ${customInstruction}
 
     parts.push({ text: input })
 
+    const AI_GATEWAY_URL = process.env.AI_GATEWAY_URL || ''
+    const config = {
+      tools: activeTools,
+      systemInstruction: fullInstruction,
+      thinkingConfig: {
+        includeThoughts: false,
+        thinkingBudget: thinkingBudget
+      }
+    }
+
+    if (AI_GATEWAY_URL) {
+      config.httpOptions = {
+        baseUrl: AI_GATEWAY_URL
+      }
+    }
+
     const chat = ai.chats.create({
       model: modelName,
-      config: {
-        tools: activeTools,
-        systemInstruction: fullInstruction,
-        thinkingConfig: {
-          includeThoughts: false,
-          thinkingBudget: thinkingBudget
-        }
-      },
+      config: config,
       history: []
     })
 
